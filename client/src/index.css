@@ -43,7 +43,11 @@
   --chart-3: 38 100% 39%;
   --chart-4: 0 84% 35%;
   --chart-5: 216 60% 20%;
-  --font-sans: Open Sans, sans-serif;
+  --brand-blue: 216 89% 31%;
+  --brand-yellow: 45 96% 56%;
+  --brand-orange: 33 100% 39%;
+  --font-sans: Inter, sans-serif;
+  --font-heading: Poppins, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
   --radius: .5rem;
