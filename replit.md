@@ -1,0 +1,150 @@
+# Be Smart Online Tutorials - Replit Documentation
+
+## Overview
+
+Be Smart Online Tutorials is a web application for a local tutoring service based in Khayelitsha, Cape Town. The platform provides information about tutoring services across multiple subjects (Mathematics, Physical Sciences, English, Life Sciences, etc.) and includes a contact form for prospective students and parents to reach out.
+
+This is a full-stack TypeScript application built as a single-page application (SPA) with a focus on accessibility, modern design, and user-friendly interactions for the local community.
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+## System Architecture
+
+### Frontend Architecture
+
+**Framework & Build Tools:**
+- React 18 with TypeScript for type-safe component development
+- Vite as the build tool and development server for fast HMR (Hot Module Replacement)
+- Wouter for lightweight client-side routing (replacing heavier alternatives like React Router)
+
+**UI Component System:**
+- shadcn/ui components built on Radix UI primitives for accessible, unstyled components
+- Tailwind CSS for utility-first styling with custom design tokens
+- Custom design system following brand colors: Professional Blue (#0a4191), Vibrant Yellow (#f9a825), and Warm Orange (#c97700)
+- Typography uses Inter for UI and Poppins for headings (Google Fonts)
+
+**State Management:**
+- TanStack Query (React Query) for server state management and data fetching
+- React Context API for authentication state (AuthContext)
+- Local component state with React hooks
+
+**Page Structure:**
+The application follows a single-page architecture with all sections on the home page:
+- Header with navigation and Google Sign-In
+- Hero section with gradient background
+- Subjects showcase section
+- About section highlighting mission and values
+- Contact form section
+- Footer with links and contact information
+
+### Backend Architecture
+
+**Server Framework:**
+- Express.js for HTTP server and API routing
+- Separate entry points for development (`index-dev.ts`) and production (`index-prod.ts`)
+- Custom middleware for JSON parsing with raw body capture for webhook support
+
+**Development vs Production:**
+- Development mode uses Vite middleware for SSR and HMR
+- Production mode serves pre-built static assets from `dist/public`
+- Custom logging middleware for API request tracking
+
+**API Endpoints:**
+- `POST /api/contact` - Submit contact form with Zod validation
+- `GET /api/contact/submissions` - Retrieve all submissions (admin/debugging)
+
+**Data Validation:**
+- Zod schemas for runtime type validation on API requests
+- Integration with Drizzle ORM schema through `drizzle-zod`
+- Custom error handling with user-friendly validation messages via `zod-validation-error`
+
+### Data Storage
+
+**Current Implementation:**
+- In-memory storage (`MemStorage` class) for contact form submissions
+- Simple key-value Map structure with UUID-based IDs
+- Submissions stored with timestamp for chronological ordering
+
+**Database Schema (PostgreSQL via Drizzle ORM):**
+The application is configured for PostgreSQL but currently uses in-memory storage:
+
+- **users table:** For Supabase authentication integration
+  - Fields: id (UUID), email (unique), name
+  
+- **contact_submissions table:** For contact form data
+  - Fields: id (UUID), name, email, subject, message, createdAt (timestamp)
+
+**Migration Strategy:**
+- Drizzle Kit configured for PostgreSQL migrations
+- Schema defined in `shared/schema.ts` for type sharing between client and server
+- Connection via environment variable `DATABASE_URL`
+
+### Authentication & Authorization
+
+**Supabase Integration:**
+- Supabase client for OAuth authentication (Google Sign-In)
+- AuthContext manages user session state across the application
+- Graceful degradation if Supabase environment variables are missing
+- Session persistence through Supabase's built-in token management
+
+**Authentication Flow:**
+- User clicks "Continue with Google" in header
+- Supabase handles OAuth flow with Google provider
+- Session state synced via `onAuthStateChange` listener
+- User profile displayed in header with avatar and dropdown menu
+
+**Current State:**
+Authentication is configured but optional - the contact form and main content work without authentication.
+
+### External Dependencies
+
+**Third-Party Services:**
+
+1. **Supabase** (`@supabase/supabase-js`)
+   - Purpose: Authentication provider (Google OAuth)
+   - Configuration: Requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` environment variables
+   - Fallback: Creates dummy client if credentials missing
+
+2. **Neon Database** (`@neondatabase/serverless`)
+   - Purpose: Serverless PostgreSQL database
+   - Configuration: `DATABASE_URL` environment variable
+   - Status: Configured but not actively used (in-memory storage currently active)
+
+**UI Libraries:**
+
+1. **Radix UI** (Multiple packages)
+   - Purpose: Accessible, unstyled component primitives
+   - Components used: Dialog, Dropdown Menu, Avatar, Toast, Tooltip, and many others
+   - Choice rationale: Best-in-class accessibility with full keyboard navigation and ARIA support
+
+2. **Tailwind CSS**
+   - Purpose: Utility-first CSS framework
+   - Customization: Extended with brand colors and custom design tokens
+   - Configuration: Custom border radius, spacing, and color variables
+
+**Developer Tools:**
+
+1. **Replit Plugins:**
+   - `@replit/vite-plugin-runtime-error-modal`: Development error overlay
+   - `@replit/vite-plugin-cartographer`: Code navigation
+   - `@replit/vite-plugin-dev-banner`: Development banner
+   - Only loaded in development mode within Replit environment
+
+**Form Handling:**
+
+1. **React Hook Form** (`react-hook-form`)
+   - Purpose: Form state management with minimal re-renders
+   - Integration: Used with `@hookform/resolvers` for Zod schema validation
+
+2. **date-fns**
+   - Purpose: Date formatting and manipulation utilities
+   - Use case: Timestamp formatting for contact submissions
+
+**Development Dependencies:**
+
+- TypeScript for type safety across frontend and backend
+- ESBuild for production bundling
+- PostCSS with Autoprefixer for CSS processing
+- Drizzle Kit for database migrations
