@@ -3,6 +3,9 @@ import { Header } from '@/components/Header';
 import { Hero } from '@/components/Hero';
 import { SubjectsSection } from '@/components/SubjectsSection';
 import { AboutSection } from '@/components/AboutSection';
+import { VideoSection } from '@/components/VideoSection';
+import { AppointmentSection } from '@/components/AppointmentSection';
+import { AvailabilityManager } from '@/components/AvailabilityManager';
 import { ContactSection } from '@/components/ContactSection';
 import { Footer } from '@/components/Footer';
 
@@ -22,6 +25,15 @@ export default function Home() {
         
         {/* About our tutoring service */}
         <AboutSection />
+        
+        {/* Video testimonials and benefits */}
+        <VideoSection />
+        
+        {/* Book an appointment */}
+        <AppointmentSection />
+        
+        {/* Manage availability (for tutors) */}
+        <AvailabilityManager />
         
         {/* Contact form and information */}
         <ContactSection />
