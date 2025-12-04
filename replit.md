@@ -51,6 +51,15 @@ The application follows a single-page architecture with all sections on the home
 - Production mode serves pre-built static assets from `dist/public`
 - Custom logging middleware for API request tracking
 
+**Production Deployment Configuration:**
+- Server binds to `0.0.0.0:5000` (required for Replit Autoscale deployments)
+- Health check endpoint available at `/health` for deployment monitoring
+- Multiple path resolution strategies for `dist/public` directory to ensure compatibility
+- Comprehensive error handling and logging in `server/index-prod.ts`
+- Promise-based server initialization with error event handling
+- Build command: `npm run build` (builds client + bundles server)
+- Start command: `npm start` (runs bundled production server from `dist/index.js`)
+
 **API Endpoints:**
 - `POST /api/contact` - Submit contact form with Zod validation
 - `GET /api/contact/submissions` - Retrieve all submissions (admin/debugging)
