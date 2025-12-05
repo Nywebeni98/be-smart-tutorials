@@ -1,9 +1,10 @@
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { GraduationCap, Award, Building2, Heart, Users, Target, Star } from 'lucide-react';
+import { GraduationCap, Award, Building2, Heart, Users, Target, Star, BookOpen, Lightbulb, PenTool } from 'lucide-react';
 import siyandaImage from '@assets/WhatsApp_Image_2025-12-01_at_22.46.26_1114b9ca_1764881684167.jpg';
 import sibonisoImage from '@assets/WhatsApp_Image_2025-11-23_at_10.05.37_30c8290f_1764882512867.jpg';
+import thamsanqaImage from '@assets/WhatsApp_Image_2025-12-05_at_11.28.31_2db17684_1764958250135.jpg';
 
 interface Tutor {
   id: string;
@@ -76,6 +77,34 @@ const tutors: Tutor[] = [
         icon: Users,
         title: 'Individual Focus',
         description: 'Patient and committed to each learner\'s individual needs, helping them not just pass, but excel.',
+      },
+    ],
+  },
+  {
+    id: 'thamsanqa-ngonyama',
+    name: 'Thamsanqa Charles Ngonyama',
+    title: 'English, History & CAT Tutor',
+    image: thamsanqaImage,
+    subjects: ['English', 'History', 'CAT'],
+    experience: 'Qualified Educator',
+    education: 'BEd Senior & FET Phase (English & History) - UJ',
+    bio: 'I am Thamsanqa Charles Ngonyama. I hold a Bachelor of Education in Senior and FET Phase (English and History) from the University of Johannesburg. I have tutored learners for a couple of years in English, History and CAT. I have always been passionate about teaching which is why I chose it as a career. My degree has equipped me with the necessary skills to create intervention plans for learners that have a hard time grasping content, which makes me the ideal tutor.',
+    quote: 'Teaching is not just a career for me, it is my passion. I believe every learner can succeed with the right support and guidance.',
+    highlights: [
+      {
+        icon: GraduationCap,
+        title: 'Qualified Educator',
+        description: 'Bachelor of Education degree from the University of Johannesburg, specialising in Senior and FET Phase teaching.',
+      },
+      {
+        icon: Lightbulb,
+        title: 'Intervention Specialist',
+        description: 'Skilled in creating personalised intervention plans for learners who struggle with challenging content.',
+      },
+      {
+        icon: BookOpen,
+        title: 'Humanities Expert',
+        description: 'Passionate about English, History and Computer Applications Technology, helping learners develop critical thinking skills.',
       },
     ],
   },
