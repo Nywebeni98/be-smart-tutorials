@@ -1,0 +1,156 @@
+✅ FINAL UPDATED PROMPT (WITH “PAY FIRST BEFORE CONTACT DETAILS”)
+
+PROMPT START
+
+Add the following features to my existing project.
+⚠️ Do NOT remove or change any existing code — only add the new functionality below.
+
+1. Tutor Profiles (Superprof Style)
+
+Each tutor must have a public profile showing:
+
+Name
+
+Subjects
+
+Photo
+
+Hourly rate
+
+Description
+
+Availability calendar
+
+Book This Tutor button
+
+When a student views a tutor, the first thing they must see is the tutor’s availability calendar.
+
+2. Availability Calendar
+
+Tutors log in and add:
+
+Days available
+
+Time slots
+
+Notes
+
+Students only see available slots.
+
+3. Booking Flow (Updated With NEW RULE)
+
+When a student selects a tutor and clicks on an available time slot:
+
+NEW RULE (MANDATORY):
+
+👉 The student must pay FIRST before they can enter their contact details.
+They must not be allowed to fill in name, email, or phone number until payment is successful.
+
+Step 1 — Select Subject & Hours
+
+Student chooses:
+
+General tutoring or Physics tutoring
+
+1 or 2 hours
+
+Price calculation:
+
+General Tutoring
+
+1 hour = R200 — https://pay.yoco.com/r/4GQxeA
+
+2 hours = R400 — https://pay.yoco.com/r/25ZL1w
+
+Physics
+
+1 hour = R250 — https://pay.yoco.com/r/2PDlRK
+
+2 hours = R500 — https://pay.yoco.com/r/7KvqDV
+
+Step 2 — Payment (MUST HAPPEN BEFORE ANY DETAILS)
+
+Redirect student to the correct Yoco link based on:
+
+Subject
+
+Duration
+
+Step 3 — After Payment Success
+
+ONLY after payment is confirmed:
+
+Student is allowed to enter:
+
+Full name
+
+Email
+
+Phone number
+
+Booking is created
+
+Student receives the tutor’s Google Meet link
+
+Tutor receives the booking details
+
+The slot becomes booked
+
+4. Tutor Dashboard
+
+Additional fields tutors must fill in:
+
+Google Meet ID / link
+
+Subjects taught
+
+Hourly rate
+
+Availability calendar
+
+Accept / Decline bookings
+
+5. Admin Panel (Me)
+
+Create a private admin login:
+
+Username: Lisa98
+
+Password: Lisa98*#2025
+
+Admin can:
+
+See everything
+
+Manage tutors
+
+View payments
+
+View bookings
+
+View meeting links
+
+Modify availability
+
+Track all subjects & hours
+
+Daily/weekly/monthly reports
+
+6. Supabase
+
+Use existing Supabase project for:
+
+Booking storage
+
+Payment status
+
+Tutor meet link
+
+Availability
+
+Admin visibility
+
+Only add required fields/tables.
+Do NOT modify or break anything already built.
+
+PROMPT END

@@ -11,6 +11,20 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Lisa98*#2025';
 // Simple admin session tracking (in production, use proper sessions/JWT)
 const adminSessions = new Set<string>();
 
+// Pending booking tokens for pay-first flow
+// Maps token -> booking info + timestamp (expires after 30 minutes)
+const pendingBookingTokens = new Map<string, { tutorId: string; availabilityId: string; subject: string; hours: number; amount: number; createdAt: number }>();
+
+// Clean expired tokens every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  pendingBookingTokens.forEach((data, token) => {
+    if (now - data.createdAt > 30 * 60 * 1000) { // 30 minutes
+      pendingBookingTokens.delete(token);
+    }
+  });
+}, 5 * 60 * 1000);
+
 // Middleware to check admin authorization
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
   const adminToken = req.headers['x-admin-token'] as string;
@@ -609,7 +623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const yocoData = await yocoResponse.json();
 
       // Update booking with Yoco checkout ID
-      await storage.updateBookingPaymentStatus(bookingPayment.id, 'pending', null);
+      await storage.updateBookingPaymentStatus(bookingPayment.id, 'pending', undefined);
 
       res.json({
         success: true,
@@ -638,7 +652,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const booking = await storage.getBookingPayment(metadata.bookingId);
           if (booking) {
             const tutorProfile = await storage.getTutorProfileById(booking.tutorId);
-            const meetingLink = tutorProfile?.googleMeetUrl || null;
+            const meetingLink = tutorProfile?.googleMeetUrl || undefined;
             
             await storage.updateBookingPaymentStatus(metadata.bookingId, 'completed', meetingLink);
             
@@ -675,7 +689,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get tutor's Google Meet URL
       const tutorProfile = await storage.getTutorProfileById(booking.tutorId);
-      const meetingLink = tutorProfile?.googleMeetUrl || null;
+      const meetingLink = tutorProfile?.googleMeetUrl || undefined;
 
       // Update payment status to completed
       const updatedBooking = await storage.updateBookingPaymentStatus(bookingId, 'completed', meetingLink);
@@ -693,6 +707,187 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error completing payment:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
+  // Fixed pricing configuration for pay-first flow
+  const ALLOWED_PRICING: Record<string, Record<number, number>> = {
+    'General Tutoring': { 1: 200, 2: 400 },
+    'Physics': { 1: 250, 2: 500 },
+  };
+
+  // Create a booking token before redirecting to payment (pay-first flow)
+  app.post("/api/booking/create-token", async (req, res) => {
+    try {
+      const { tutorId, availabilityId, subject, hours, amount } = req.body;
+      
+      if (!tutorId || !subject || !hours || !amount) {
+        return res.status(400).json({
+          success: false,
+          message: "Missing required fields",
+        });
+      }
+
+      // Validate subject is allowed
+      if (!ALLOWED_PRICING[subject]) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid subject. Only 'General Tutoring' and 'Physics' are supported.",
+        });
+      }
+
+      // Validate hours is allowed (1 or 2)
+      if (hours !== 1 && hours !== 2) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid hours. Only 1 or 2 hours are supported.",
+        });
+      }
+
+      // Validate amount matches expected pricing
+      const expectedAmount = ALLOWED_PRICING[subject][hours];
+      if (amount !== expectedAmount) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid amount. Expected R${expectedAmount} for ${subject} ${hours} hour(s).`,
+        });
+      }
+
+      // Verify tutor exists
+      const tutorProfile = await storage.getTutorProfileById(tutorId);
+      if (!tutorProfile) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid tutor ID.",
+        });
+      }
+
+      // Verify availability exists and is not already booked (if provided)
+      if (availabilityId) {
+        const availabilities = await storage.getAvailabilitiesByTutor(tutorId);
+        const slot = availabilities.find(a => a.id === availabilityId);
+        if (!slot) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid availability slot.",
+          });
+        }
+        if (slot.isBooked) {
+          return res.status(400).json({
+            success: false,
+            message: "This time slot is already booked. Please choose another.",
+          });
+        }
+      }
+
+      // Generate a unique token
+      const token = `booking_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+      
+      // Store the pending booking info with validated data
+      pendingBookingTokens.set(token, {
+        tutorId,
+        availabilityId: availabilityId || '',
+        subject,
+        hours,
+        amount: expectedAmount, // Use server-validated amount
+        createdAt: Date.now(),
+      });
+
+      res.json({
+        success: true,
+        token,
+      });
+    } catch (error) {
+      console.error("Error creating booking token:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
+  // Post-payment booking completion (pay-first flow)
+  // This endpoint is called AFTER payment when student enters their details
+  app.post("/api/booking-payments/complete", async (req, res) => {
+    try {
+      const { bookingToken, studentName, studentEmail, studentPhone } = req.body;
+      
+      if (!bookingToken || !studentName || !studentEmail) {
+        return res.status(400).json({
+          success: false,
+          message: "Missing required fields: bookingToken, studentName, and studentEmail are required",
+        });
+      }
+
+      // Validate the booking token
+      const pendingBooking = pendingBookingTokens.get(bookingToken);
+      if (!pendingBooking) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid or expired booking token. Please start a new booking.",
+        });
+      }
+
+      // Check if token is expired (30 minutes)
+      if (Date.now() - pendingBooking.createdAt > 30 * 60 * 1000) {
+        pendingBookingTokens.delete(bookingToken);
+        return res.status(400).json({
+          success: false,
+          message: "Booking token has expired. Please start a new booking.",
+        });
+      }
+
+      // Verify availability is still unbooked (in case another student booked it first)
+      if (pendingBooking.availabilityId) {
+        const availabilities = await storage.getAvailabilitiesByTutor(pendingBooking.tutorId);
+        const slot = availabilities.find(a => a.id === pendingBooking.availabilityId);
+        if (slot && slot.isBooked) {
+          pendingBookingTokens.delete(bookingToken);
+          return res.status(400).json({
+            success: false,
+            message: "This time slot has already been booked by another student. Please contact support for a refund.",
+          });
+        }
+      }
+
+      // Get tutor's Google Meet URL
+      const tutorProfile = await storage.getTutorProfileById(pendingBooking.tutorId);
+      const meetingLink = tutorProfile?.googleMeetUrl || null;
+
+      // Create the booking payment record (payment completed via Yoco link)
+      const bookingPayment = await storage.createBookingPayment({
+        tutorId: pendingBooking.tutorId,
+        availabilityId: pendingBooking.availabilityId || null,
+        studentName,
+        studentEmail,
+        studentPhone: studentPhone || null,
+        hours: pendingBooking.hours,
+        amount: pendingBooking.amount,
+        paymentStatus: 'completed', // Payment done via Yoco link
+        yocoCheckoutId: null,
+        meetingLink,
+      });
+
+      // Mark availability as booked if provided
+      if (pendingBooking.availabilityId) {
+        await storage.updateAvailability(pendingBooking.availabilityId, { isBooked: true });
+      }
+
+      // Delete the used token (one-time use)
+      pendingBookingTokens.delete(bookingToken);
+
+      res.status(201).json({
+        success: true,
+        message: "Booking completed successfully",
+        booking: bookingPayment,
+        meetingLink,
+      });
+    } catch (error) {
+      console.error("Error completing booking:", error);
       res.status(500).json({
         success: false,
         message: "Internal server error",

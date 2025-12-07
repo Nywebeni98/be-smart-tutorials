@@ -18,7 +18,7 @@ export interface IStorage {
   createAvailability(availability: InsertAvailability): Promise<Availability>;
   getAllAvailabilities(): Promise<Availability[]>;
   getAvailabilitiesByTutor(tutorId: string): Promise<Availability[]>;
-  updateAvailability(id: string, updates: Partial<InsertAvailability>): Promise<Availability | undefined>;
+  updateAvailability(id: string, updates: Partial<InsertAvailability> & { isBooked?: boolean }): Promise<Availability | undefined>;
   deleteAvailability(id: string): Promise<boolean>;
   
   // Tutor profile methods
@@ -161,7 +161,7 @@ export class MemStorage implements IStorage {
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }
 
-  async updateAvailability(id: string, updates: Partial<InsertAvailability>): Promise<Availability | undefined> {
+  async updateAvailability(id: string, updates: Partial<InsertAvailability> & { isBooked?: boolean }): Promise<Availability | undefined> {
     const availability = this.availabilities.get(id);
     if (availability) {
       const updated = { ...availability, ...updates };
