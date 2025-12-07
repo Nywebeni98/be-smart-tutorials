@@ -127,24 +127,41 @@ The application is configured for PostgreSQL but currently uses in-memory storag
 - Tutors set available time slots (day, date, startTime, endTime)
 - Slots marked as booked after successful payment
 
-### Payment Integration (Yoco)
+### Payment Integration (Yoco) - Pay-First Flow
 
-**Yoco Payment Gateway:**
-- Secret key stored in `YOCO_SECRET_KEY` environment variable
-- Checkout creation at `/api/yoco/create-checkout`
-- Minimum payment: R2 (200 cents), currency: ZAR
+**Yoco Fixed Payment Links:**
+- Uses pre-configured Yoco payment links (not dynamic checkout API)
+- Pricing by subject and duration:
+  - General Tutoring: R200 (1 hour), R400 (2 hours)
+  - Physics: R250 (1 hour), R500 (2 hours)
 
-**Payment Flow:**
-1. Student selects tutor and time slot
-2. Enters name, email, phone, session duration
-3. Clicks "Proceed to Payment" → redirects to Yoco checkout
-4. On success: payment marked complete, Google Meet link revealed
-5. On failure/cancel: appropriate feedback page shown
+**Secure Pay-First Flow:**
+1. Student selects tutor, subject, and duration in BookingModal
+2. Frontend calls `POST /api/booking/create-token` to get server-issued token
+3. Server validates subject/hours/amount against allowed pricing configuration
+4. Token stored with booking details server-side (expires after 30 minutes)
+5. Student redirected to fixed Yoco payment link
+6. After payment, student returns to `/payment/success`
+7. Student enters contact details (name, email, phone)
+8. Frontend calls `POST /api/booking-payments/complete` with token
+9. Server validates token, checks availability still unbooked, creates booking
+10. Token deleted (one-time use), Google Meet link revealed
+
+**Security Features:**
+- Server-side token validation prevents unauthorized booking creation
+- Tokens are one-time use (deleted after successful booking)
+- Tokens expire after 30 minutes
+- Amount/subject/hours validated against fixed pricing server-side
+- Availability re-checked before completing booking to prevent double-booking
 
 **Payment Callback URLs:**
-- `/payment/success?bookingId=xxx` - Success page with meeting link
+- `/payment/success` - Collects student details and completes booking
 - `/payment/failure` - Failure page with retry option
 - `/payment/cancel` - Cancellation page
+
+**API Endpoints:**
+- `POST /api/booking/create-token` - Creates booking token before payment
+- `POST /api/booking-payments/complete` - Completes booking after payment with token validation
 
 ### External Dependencies
 
