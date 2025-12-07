@@ -1,7 +1,12 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { GraduationCap, Award, Building2, Heart, Users, Target, Star, BookOpen, Lightbulb, PenTool } from 'lucide-react';
+import { BookingModal } from '@/components/BookingModal';
+import { GraduationCap, Award, Building2, Heart, Users, Target, Star, BookOpen, Lightbulb, Calendar, DollarSign } from 'lucide-react';
+import type { TutorProfile } from '@shared/schema';
 import siyandaImage from '@assets/WhatsApp_Image_2025-12-01_at_22.46.26_1114b9ca_1764881684167.jpg';
 import sibonisoImage from '@assets/WhatsApp_Image_2025-11-23_at_10.05.37_30c8290f_1764882512867.jpg';
 import thamsanqaImage from '@assets/WhatsApp_Image_2025-12-05_at_11.28.31_2db17684_1764958250135.jpg';
@@ -111,6 +116,20 @@ const tutors: Tutor[] = [
 ];
 
 export function TutorsSection() {
+  const [bookingTutor, setBookingTutor] = useState<TutorProfile | null>(null);
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+
+  const { data: registeredTutors = [] } = useQuery<TutorProfile[]>({
+    queryKey: ['/api/tutor-profiles'],
+  });
+
+  const approvedTutors = registeredTutors.filter(t => t.isApproved && !t.isBlocked);
+
+  const handleBookTutor = (tutor: TutorProfile) => {
+    setBookingTutor(tutor);
+    setBookingModalOpen(true);
+  };
+
   return (
     <section id="tutors" className="py-16 lg:py-24 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -257,8 +276,107 @@ export function TutorsSection() {
               </div>
             </Card>
           ))}
+
+          {/* Registered tutors from database */}
+          {approvedTutors.length > 0 && (
+            <>
+              <div className="border-t pt-12 mt-12">
+                <h3 
+                  className="font-heading font-semibold text-2xl sm:text-3xl mb-8 text-center"
+                  style={{ color: 'hsl(var(--brand-blue))' }}
+                  data-testid="text-more-tutors-heading"
+                >
+                  Book a Session with Our Online Tutors
+                </h3>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {approvedTutors.map((tutor) => (
+                  <Card 
+                    key={tutor.id}
+                    className="overflow-hidden hover-elevate transition-all"
+                    data-testid={`card-registered-tutor-${tutor.id}`}
+                  >
+                    <div className="p-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <Avatar className="w-16 h-16 border-2 border-primary/20">
+                          <AvatarFallback 
+                            className="text-xl font-bold"
+                            style={{ backgroundColor: 'hsl(var(--brand-blue))', color: 'white' }}
+                          >
+                            {tutor.fullName.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h4 
+                            className="font-heading font-semibold text-lg"
+                            style={{ color: 'hsl(var(--brand-blue))' }}
+                            data-testid={`text-reg-tutor-name-${tutor.id}`}
+                          >
+                            {tutor.fullName}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">{tutor.email}</p>
+                        </div>
+                      </div>
+
+                      {tutor.bio && (
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-3" data-testid={`text-reg-tutor-bio-${tutor.id}`}>
+                          {tutor.bio}
+                        </p>
+                      )}
+
+                      {tutor.subjects && tutor.subjects.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {tutor.subjects.map((subject, idx) => (
+                            <Badge 
+                              key={idx}
+                              variant="outline"
+                              className="border-2"
+                              style={{ borderColor: 'hsl(var(--brand-blue))', color: 'hsl(var(--brand-blue))' }}
+                              data-testid={`badge-reg-subject-${tutor.id}-${idx}`}
+                            >
+                              {subject}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4" style={{ color: 'hsl(var(--brand-yellow))' }} />
+                          <span className="font-semibold" style={{ color: 'hsl(var(--brand-orange))' }}>
+                            R{tutor.hourlyRate}/hour
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button
+                        className="w-full"
+                        style={{ 
+                          backgroundColor: 'hsl(var(--brand-blue))',
+                          color: 'white'
+                        }}
+                        onClick={() => handleBookTutor(tutor)}
+                        data-testid={`button-book-${tutor.id}`}
+                      >
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Book a Session
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
+
+      {/* Booking Modal */}
+      <BookingModal 
+        isOpen={bookingModalOpen} 
+        onClose={() => setBookingModalOpen(false)} 
+        tutor={bookingTutor} 
+      />
     </section>
   );
 }

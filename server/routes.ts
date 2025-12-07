@@ -521,6 +521,164 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Yoco Payment Integration
+  app.post("/api/yoco/create-checkout", async (req, res) => {
+    try {
+      const { tutorId, tutorName, availabilityId, hours, amount, studentName, studentEmail, studentPhone } = req.body;
+      
+      const YOCO_SECRET_KEY = process.env.YOCO_SECRET_KEY;
+      if (!YOCO_SECRET_KEY) {
+        return res.status(500).json({
+          success: false,
+          message: "Payment system not configured. Please contact support.",
+        });
+      }
+
+      // Create a booking payment record first (pending status)
+      const bookingPayment = await storage.createBookingPayment({
+        tutorId,
+        availabilityId,
+        studentName,
+        studentEmail,
+        studentPhone: studentPhone || null,
+        hours,
+        amount,
+        paymentStatus: 'pending',
+        yocoCheckoutId: null,
+        meetingLink: null,
+      });
+
+      // Get the base URL for callbacks
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+        : `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
+
+      // Create Yoco checkout session
+      const yocoResponse = await fetch('https://payments.yoco.com/api/checkouts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${YOCO_SECRET_KEY}`,
+        },
+        body: JSON.stringify({
+          amount: amount * 100, // Yoco uses cents
+          currency: 'ZAR',
+          successUrl: `${baseUrl}/payment/success?bookingId=${bookingPayment.id}`,
+          cancelUrl: `${baseUrl}/payment/cancel?bookingId=${bookingPayment.id}`,
+          failureUrl: `${baseUrl}/payment/failure?bookingId=${bookingPayment.id}`,
+          metadata: {
+            bookingId: bookingPayment.id,
+            tutorId,
+            tutorName,
+            studentEmail,
+            hours: hours.toString(),
+          },
+        }),
+      });
+
+      if (!yocoResponse.ok) {
+        const errorData = await yocoResponse.json();
+        console.error('Yoco checkout creation failed:', errorData);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to create payment session",
+        });
+      }
+
+      const yocoData = await yocoResponse.json();
+
+      // Update booking with Yoco checkout ID
+      await storage.updateBookingPaymentStatus(bookingPayment.id, 'pending', null);
+
+      res.json({
+        success: true,
+        checkoutId: yocoData.id,
+        redirectUrl: yocoData.redirectUrl,
+        bookingId: bookingPayment.id,
+      });
+    } catch (error) {
+      console.error("Error creating Yoco checkout:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
+  // Yoco payment webhook
+  app.post("/api/yoco/webhook", async (req, res) => {
+    try {
+      const event = req.body;
+      
+      if (event.type === 'payment.succeeded') {
+        const { checkoutId, metadata } = event.payload;
+        if (metadata?.bookingId) {
+          // Get the tutor's Google Meet URL
+          const booking = await storage.getBookingPayment(metadata.bookingId);
+          if (booking) {
+            const tutorProfile = await storage.getTutorProfileById(booking.tutorId);
+            const meetingLink = tutorProfile?.googleMeetUrl || null;
+            
+            await storage.updateBookingPaymentStatus(metadata.bookingId, 'completed', meetingLink);
+            
+            // Mark the availability slot as booked
+            if (booking.availabilityId) {
+              await storage.updateAvailability(booking.availabilityId, { isBooked: true });
+            }
+          }
+        }
+      }
+      
+      res.status(200).send('OK');
+    } catch (error) {
+      console.error("Error processing Yoco webhook:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
+  // Payment callback endpoints for frontend redirect handling
+  app.post("/api/payment/complete/:bookingId", async (req, res) => {
+    try {
+      const { bookingId } = req.params;
+      const booking = await storage.getBookingPayment(bookingId);
+      
+      if (!booking) {
+        return res.status(404).json({
+          success: false,
+          message: "Booking not found",
+        });
+      }
+
+      // Get tutor's Google Meet URL
+      const tutorProfile = await storage.getTutorProfileById(booking.tutorId);
+      const meetingLink = tutorProfile?.googleMeetUrl || null;
+
+      // Update payment status to completed
+      const updatedBooking = await storage.updateBookingPaymentStatus(bookingId, 'completed', meetingLink);
+
+      // Mark availability as booked
+      if (booking.availabilityId) {
+        await storage.updateAvailability(booking.availabilityId, { isBooked: true });
+      }
+
+      res.json({
+        success: true,
+        message: "Payment completed successfully",
+        booking: updatedBooking,
+        meetingLink,
+      });
+    } catch (error) {
+      console.error("Error completing payment:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

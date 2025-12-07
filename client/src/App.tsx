@@ -7,6 +7,9 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Home from "@/pages/home";
 import TutorDashboard from "@/pages/tutor-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
+import PaymentSuccess from "@/pages/payment-success";
+import PaymentFailure from "@/pages/payment-failure";
+import PaymentCancel from "@/pages/payment-cancel";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -20,6 +23,11 @@ function Router() {
       
       {/* Admin dashboard - protected route */}
       <Route path="/admin" component={AdminDashboard} />
+      
+      {/* Payment callback pages */}
+      <Route path="/payment/success" component={PaymentSuccess} />
+      <Route path="/payment/failure" component={PaymentFailure} />
+      <Route path="/payment/cancel" component={PaymentCancel} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
