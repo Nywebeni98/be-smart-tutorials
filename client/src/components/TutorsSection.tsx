@@ -140,6 +140,27 @@ export function TutorsSection() {
     setBookingModalOpen(true);
   };
 
+  // Convert featured tutor to TutorProfile format for booking modal
+  const handleBookFeaturedTutor = (tutor: Tutor) => {
+    const tutorProfile: TutorProfile = {
+      id: tutor.id,
+      supabaseUserId: tutor.id,
+      fullName: tutor.name,
+      email: `${tutor.id}@besmartonline.co.za`,
+      bio: tutor.bio,
+      subjects: tutor.subjects,
+      hourlyRate: tutor.hourlyRate,
+      photoUrl: tutor.image,
+      googleMeetUrl: tutor.googleMeetUrl,
+      isApproved: true,
+      isBlocked: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    setBookingTutor(tutorProfile);
+    setBookingModalOpen(true);
+  };
+
   return (
     <section id="tutors" className="py-16 lg:py-24 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -240,19 +261,21 @@ export function TutorsSection() {
                     )}
                   </div>
 
-                  {/* Google Meet Link */}
+                  {/* Book & Pay Button */}
                   <div className="mt-4">
-                    <a 
-                      href={tutor.googleMeetUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors hover:opacity-90"
+                    <Button
+                      onClick={() => handleBookFeaturedTutor(tutor)}
+                      className="text-white"
                       style={{ backgroundColor: 'hsl(var(--brand-blue))' }}
-                      data-testid={`link-meet-${tutor.id}`}
+                      data-testid={`button-book-${tutor.id}`}
                     >
-                      <Video className="w-4 h-4" />
-                      Join Google Meet
-                    </a>
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Book & Pay
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      <Video className="w-3 h-3 inline mr-1" />
+                      Google Meet link provided after payment
+                    </p>
                   </div>
                 </div>
 
