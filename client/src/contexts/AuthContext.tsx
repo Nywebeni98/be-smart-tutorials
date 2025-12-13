@@ -142,6 +142,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
+        // Handle specific Supabase auth errors with user-friendly messages
+        const errorMessage = error.message.toLowerCase();
+        
+        if (errorMessage.includes('already registered') || errorMessage.includes('already exists')) {
+          return { error: 'An account with this email already exists. Please sign in instead.' };
+        }
+        
+        if (errorMessage.includes('password')) {
+          return { error: 'Password does not meet requirements. Please use a stronger password.' };
+        }
+        
+        if (errorMessage.includes('email')) {
+          return { error: 'Please enter a valid email address.' };
+        }
+        
         return { error: error.message };
       }
 
@@ -182,6 +197,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
+        // Handle specific Supabase auth errors with user-friendly messages
+        const errorMessage = error.message.toLowerCase();
+        
+        if (errorMessage.includes('invalid login credentials') || errorMessage.includes('invalid credentials')) {
+          return { error: 'Invalid email or password. Please check your credentials and try again.' };
+        }
+        
+        if (errorMessage.includes('email not confirmed')) {
+          return { error: 'Please verify your email address. Check your inbox for a confirmation link.' };
+        }
+        
+        if (errorMessage.includes('too many requests')) {
+          return { error: 'Too many login attempts. Please wait a few minutes before trying again.' };
+        }
+        
+        if (errorMessage.includes('user not found')) {
+          return { error: 'No account found with this email. Please sign up first.' };
+        }
+        
         return { error: error.message };
       }
 
@@ -190,18 +224,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!profile) {
           // Sign out if no tutor profile exists
           await supabase.auth.signOut();
-          return { error: 'No tutor account found. Please sign up first.' };
+          return { error: 'No tutor account found for this email. Please sign up as a tutor first.' };
         }
         
         if (profile.isBlocked) {
           await supabase.auth.signOut();
-          return { error: 'Your account has been blocked. Please contact support.' };
+          return { error: 'Your account has been blocked. Please contact support for assistance.' };
         }
       }
 
       return {};
     } catch (error) {
-      return { error: 'An unexpected error occurred' };
+      console.error('Tutor sign-in error:', error);
+      return { error: 'Unable to sign in. Please check your internet connection and try again.' };
     }
   };
 

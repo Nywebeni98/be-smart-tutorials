@@ -1,0 +1,135 @@
+Please fix and improve the entire authentication system, especially Tutor Sign-In, Strong Passwords, and Forgot Password.
+
+✅ REQUIREMENTS
+1️⃣ Strong Password Validation
+
+Enforce password rules:
+
+Minimum 8 characters
+
+At least 1 uppercase letter
+
+At least 1 lowercase letter
+
+At least 1 number
+
+At least 1 special character
+
+Validate on frontend before signup
+
+Show clear error messages if password is weak
+
+2️⃣ Fix Tutor Sign-In (CRITICAL)
+
+Tutor login is currently not working correctly
+
+Ensure tutors can sign in using:
+
+Email + Password
+
+Fix any issues with:
+
+Supabase signInWithPassword
+
+Wrong role filtering
+
+Incorrect table joins or auth state handling
+
+Display correct error messages:
+
+Invalid credentials
+
+Email not confirmed
+
+Account not found
+
+3️⃣ Forgot Password (Email Reset Link)
+
+Add Forgot Password link on sign-in page
+
+When clicked:
+
+Ask user for email
+
+Send a secure password reset email
+
+Use:
+
+supabase.auth.resetPasswordForEmail(email, {
+  redirectTo: "https://your-site.com/reset-password"
+})
+
+4️⃣ Reset Password Page
+
+When user clicks email link:
+
+Open reset password page
+
+Allow user to enter new strong password
+
+Confirm password
+
+Use:
+
+supabase.auth.updateUser({ password })
+
+
+Redirect to sign-in page after success
+
+5️⃣ Tutor Role Validation
+
+Ensure tutor users:
+
+Exist in tutors table
+
+Are linked using auth.users.id
+
+Prevent non-tutors from accessing tutor dashboard
+
+6️⃣ Security Best Practices
+
+Do NOT store plain passwords
+
+Rely fully on Supabase Auth
+
+Protect tutor routes using auth guards
+
+Check session on page load
+
+7️⃣ Explain Everything
+
+Explain:
+
+Why tutor sign-in was failing
+
+What code was changed
+
+How password reset email works
+
+How Supabase handles security
+
+Use clean, production-ready Supabase code and best practices.
+
+🔥 IMPORTANT SUPABASE SETTINGS (DO THIS NOW)
+
+In Supabase Dashboard → Auth → Settings:
+
+✅ Enable Email confirmations
+
+✅ Set Site URL
+
+✅ Add Redirect URL:
+
+https://your-site.com/reset-password
+
+🧠 COMMON TUTOR LOGIN BUG (FYI)
+
+Most tutor sign-in problems happen because:
+
+Tutor role is checked before auth session loads
+
+Tutor table not linked to auth.users.id
+
+Using getUser() instead of getSession()
+
+Email not confirmed

@@ -10,6 +10,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import PaymentSuccess from "@/pages/payment-success";
 import PaymentFailure from "@/pages/payment-failure";
 import PaymentCancel from "@/pages/payment-cancel";
+import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -28,6 +29,9 @@ function Router() {
       <Route path="/payment/success" component={PaymentSuccess} />
       <Route path="/payment/failure" component={PaymentFailure} />
       <Route path="/payment/cancel" component={PaymentCancel} />
+      
+      {/* Password reset page */}
+      <Route path="/reset-password" component={ResetPassword} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
