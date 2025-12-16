@@ -2,13 +2,23 @@
 
 ## Overview
 
-Be Smart Online Tutorials is a web application for a local tutoring service based in Khayelitsha, Cape Town. The platform provides information about tutoring services across multiple subjects (Mathematics, Physical Sciences, English, Life Sciences, etc.) and includes a contact form for prospective students and parents to reach out.
+Be Smart Online Tutorials is a web application for a local tutoring service based in Cape Town, South Africa. The platform provides information about tutoring services across multiple subjects (Maths, Physical Sciences, English, Life Sciences, etc.) and includes a contact form for prospective students and parents to reach out.
 
 This is a full-stack TypeScript application built as a single-page application (SPA) with a focus on accessibility, modern design, and user-friendly interactions for the local community.
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+## Pending Features / Notes
+
+### Email Notifications (Not Yet Configured)
+- **Status:** Email integration (Resend) was offered but declined by user
+- **Goal:** Send booking notifications to onlinepresenceimpact@gmail.com when students complete bookings
+- **Alternative:** If user wants email notifications in the future, they can either:
+  1. Set up the Resend integration through Replit's integration system
+  2. Provide a Resend API key or other email service credentials to store as secrets
+- **Implementation location:** Would be added to `/api/booking-payments/complete` endpoint in `server/routes.ts`
 
 ## System Architecture
 
