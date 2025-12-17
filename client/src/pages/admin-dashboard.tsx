@@ -15,9 +15,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { 
   Users, BookOpen, DollarSign, ShieldCheck, LogOut, 
   CheckCircle, XCircle, Ban, UserCheck, Loader2, AlertCircle,
-  Mail, Calendar, Clock, Plus, Trash2, CalendarDays
+  Mail, Calendar, Clock, Plus, Trash2, CalendarDays, Bell
 } from 'lucide-react';
-import type { TutorProfile, BookingPayment, Pricing, Availability } from '@shared/schema';
+import type { TutorProfile, BookingPayment, Pricing, Availability, ActionLog } from '@shared/schema';
 
 // Featured tutors are now loaded from the database (tutorProfiles query)
 // This ensures we use the correct database UUIDs for availability
@@ -55,6 +55,16 @@ export default function AdminDashboard() {
     queryKey: ['/api/availability'],
     enabled: isAdmin,
   });
+
+  // Fetch action logs for notifications (booking notifications)
+  const { data: actionLogs = [], isLoading: loadingActionLogs } = useQuery<ActionLog[]>({
+    queryKey: ['/api/action-logs'],
+    enabled: isAdmin,
+    refetchInterval: 30000, // Refetch every 30 seconds for new notifications
+  });
+
+  // Filter booking notifications only
+  const bookingNotifications = actionLogs.filter(log => log.actionType === 'booking_completed');
 
   const approveTutorMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -284,11 +294,20 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        <Tabs defaultValue="availability" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 max-w-lg">
+        <Tabs defaultValue="notifications" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5 max-w-2xl">
+            <TabsTrigger value="notifications" data-testid="tab-notifications">
+              <Bell className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">Notifications</span>
+              {bookingNotifications.length > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                  {bookingNotifications.length}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="availability" data-testid="tab-availability">
               <CalendarDays className="h-4 w-4 mr-1" />
-              Availability
+              <span className="hidden sm:inline">Availability</span>
             </TabsTrigger>
             <TabsTrigger value="tutors" data-testid="tab-tutors">
               Tutors
@@ -301,6 +320,79 @@ export default function AdminDashboard() {
             <TabsTrigger value="bookings" data-testid="tab-bookings">Bookings</TabsTrigger>
             <TabsTrigger value="pricing" data-testid="tab-pricing">Pricing</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="notifications" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Recent Booking Notifications
+                </CardTitle>
+                <CardDescription>
+                  New bookings and important updates will appear here. Notifications are sent to your email as well.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingActionLogs ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-muted-foreground">Loading notifications...</span>
+                  </div>
+                ) : bookingNotifications.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No booking notifications yet.</p>
+                    <p className="text-sm">New bookings will appear here automatically.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {bookingNotifications.map((notification) => {
+                      const metadata = notification.metadata ? JSON.parse(notification.metadata) : {};
+                      return (
+                        <Card key={notification.id} className="border-l-4 border-l-green-500">
+                          <CardContent className="pt-4">
+                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle className="h-5 w-5 text-green-500" />
+                                  <span className="font-semibold">New Booking</span>
+                                  <Badge variant="secondary">
+                                    R{metadata.amount}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground">{notification.description}</p>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                                  <div>
+                                    <span className="text-muted-foreground">Student:</span>
+                                    <p className="font-medium">{metadata.studentName}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-muted-foreground">Email:</span>
+                                    <p className="font-medium">{metadata.studentEmail}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-muted-foreground">Subject:</span>
+                                    <p className="font-medium">{metadata.subject}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-muted-foreground">Date/Time:</span>
+                                    <p className="font-medium">{metadata.slotDate} {metadata.slotTime}</p>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {notification.createdAt && new Date(notification.createdAt).toLocaleString()}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="availability" className="space-y-6">
             <Card>

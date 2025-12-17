@@ -74,7 +74,7 @@ const adminSessions = new Set<string>();
 
 // Pending booking tokens for pay-first flow
 // Maps token -> booking info + timestamp (expires after 30 minutes)
-const pendingBookingTokens = new Map<string, { tutorId: string; availabilityId: string; subject: string; hours: number; amount: number; createdAt: number }>();
+const pendingBookingTokens = new Map<string, { tutorId: string; availabilityId: string; subject: string; hours: number; amount: number; studentName: string; studentEmail: string; createdAt: number }>();
 
 // Clean expired tokens every 5 minutes
 setInterval(() => {
@@ -881,12 +881,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a booking token before redirecting to payment (pay-first flow)
   app.post("/api/booking/create-token", async (req, res) => {
     try {
-      const { tutorId, availabilityId, subject, hours, amount } = req.body;
+      const { tutorId, availabilityId, subject, hours, amount, studentName, studentEmail } = req.body;
       
       if (!tutorId || !subject || !hours || !amount) {
         return res.status(400).json({
           success: false,
           message: "Missing required fields",
+        });
+      }
+
+      if (!studentName || !studentEmail) {
+        return res.status(400).json({
+          success: false,
+          message: "Student name and email are required",
         });
       }
 
@@ -945,13 +952,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate a unique token
       const token = `booking_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
       
-      // Store the pending booking info with validated data
+      // Store the pending booking info with validated data including student contact info
       pendingBookingTokens.set(token, {
         tutorId,
         availabilityId: availabilityId || '',
         subject,
         hours,
         amount: expectedAmount, // Use server-validated amount
+        studentName,
+        studentEmail,
         createdAt: Date.now(),
       });
 
@@ -972,12 +981,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // This endpoint is called AFTER payment when student enters their details
   app.post("/api/booking-payments/complete", async (req, res) => {
     try {
-      const { bookingToken, studentName, studentEmail, studentPhone } = req.body;
+      const { bookingToken, studentName: reqStudentName, studentEmail: reqStudentEmail, studentPhone } = req.body;
       
-      if (!bookingToken || !studentName || !studentEmail) {
+      if (!bookingToken) {
         return res.status(400).json({
           success: false,
-          message: "Missing required fields: bookingToken, studentName, and studentEmail are required",
+          message: "Missing required field: bookingToken is required",
         });
       }
 
@@ -990,7 +999,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Check if token is expired (30 minutes)
+      // Check if token is expired (30 minutes) - do this BEFORE any other processing
       if (Date.now() - pendingBooking.createdAt > 30 * 60 * 1000) {
         pendingBookingTokens.delete(bookingToken);
         return res.status(400).json({
@@ -998,6 +1007,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Booking token has expired. Please start a new booking.",
         });
       }
+
+      // Use stored student info from token, allow override from request
+      const studentName = reqStudentName || pendingBooking.studentName;
+      const studentEmail = reqStudentEmail || pendingBooking.studentEmail;
+
+      if (!studentName?.trim() || !studentEmail?.trim()) {
+        pendingBookingTokens.delete(bookingToken);
+        return res.status(400).json({
+          success: false,
+          message: "Missing student name or email. Please start a new booking.",
+        });
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(studentEmail.trim())) {
+        pendingBookingTokens.delete(bookingToken);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid email address format. Please start a new booking.",
+        });
+      }
+
+      // Normalize the values
+      const normalizedName = studentName.trim();
+      const normalizedEmail = studentEmail.trim();
 
       // Verify availability is still unbooked (in case another student booked it first)
       if (pendingBooking.availabilityId) {
@@ -1020,8 +1055,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const bookingPayment = await storage.createBookingPayment({
         tutorId: pendingBooking.tutorId,
         availabilityId: pendingBooking.availabilityId || null,
-        studentName,
-        studentEmail,
+        studentName: normalizedName,
+        studentEmail: normalizedEmail,
         studentPhone: studentPhone || null,
         hours: pendingBooking.hours,
         amount: pendingBooking.amount,
@@ -1047,10 +1082,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Delete the used token (one-time use)
       pendingBookingTokens.delete(bookingToken);
 
+      // Log the booking action for admin dashboard notifications
+      await storage.createActionLog({
+        actionType: 'booking_completed',
+        description: `New booking: ${normalizedName} booked ${pendingBooking.subject} (${pendingBooking.hours} hour(s)) with ${tutorProfile?.fullName || 'Unknown Tutor'} for R${pendingBooking.amount}`,
+        userId: normalizedEmail,
+        metadata: JSON.stringify({
+          bookingId: bookingPayment.id,
+          studentName: normalizedName,
+          studentEmail: normalizedEmail,
+          tutorId: pendingBooking.tutorId,
+          tutorName: tutorProfile?.fullName,
+          subject: pendingBooking.subject,
+          hours: pendingBooking.hours,
+          amount: pendingBooking.amount,
+          slotDate,
+          slotTime,
+        }),
+      });
+
       // Send booking notification email to admin
       sendBookingNotificationEmail({
-        studentName,
-        studentEmail,
+        studentName: normalizedName,
+        studentEmail: normalizedEmail,
         studentPhone: studentPhone || null,
         tutorName: tutorProfile?.fullName || 'Unknown Tutor',
         subject: pendingBooking.subject,

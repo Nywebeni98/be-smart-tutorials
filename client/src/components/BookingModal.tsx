@@ -2,11 +2,12 @@ import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { Loader2, CreditCard, Calendar, Clock, User, BookOpen } from 'lucide-react';
+import { Loader2, CreditCard, Calendar, Clock, User, BookOpen, Mail } from 'lucide-react';
 import type { TutorProfile, Availability, PaymentLink } from '@shared/schema';
 
 interface BookingModalProps {
@@ -20,6 +21,8 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [hours, setHours] = useState<string>('1');
   const [subject, setSubject] = useState<string>('');
+  const [studentName, setStudentName] = useState<string>('');
+  const [studentEmail, setStudentEmail] = useState<string>('');
 
   // Fetch payment links from database
   const { data: paymentLinks = [] } = useQuery<PaymentLink[]>({
@@ -42,12 +45,14 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
     return map;
   }, [paymentLinks]);
 
-  const { data: availabilities = [], isLoading: loadingSlots } = useQuery<Availability[]>({
-    queryKey: ['/api/availability/tutor', tutor?.id],
-    enabled: !!tutor?.id && isOpen,
+  // Fetch ALL available time slots from all tutors
+  const { data: allAvailabilities = [], isLoading: loadingSlots } = useQuery<Availability[]>({
+    queryKey: ['/api/availability'],
+    enabled: isOpen,
   });
 
-  const availableSlots = availabilities.filter(slot => !slot.isBooked);
+  // Filter to show only slots for this tutor that are not booked
+  const availableSlots = allAvailabilities.filter(slot => slot.tutorId === tutor?.id && !slot.isBooked);
 
   // Get subject options based on what the tutor actually teaches
   // Map tutor subjects to our supported payment subjects
@@ -82,20 +87,22 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
 
   // Mutation to create booking token before payment
   const createTokenMutation = useMutation({
-    mutationFn: async (data: { tutorId: string; availabilityId: string; subject: string; hours: number; amount: number; paymentUrl: string }) => {
+    mutationFn: async (data: { tutorId: string; availabilityId: string; subject: string; hours: number; amount: number; paymentUrl: string; studentName: string; studentEmail: string }) => {
       const response = await apiRequest('POST', '/api/booking/create-token', {
         tutorId: data.tutorId,
         availabilityId: data.availabilityId,
         subject: data.subject,
         hours: data.hours,
         amount: data.amount,
+        studentName: data.studentName,
+        studentEmail: data.studentEmail,
       });
       return response.json();
     },
     onSuccess: (data: any, variables) => {
       if (data.success && data.token) {
         // Use variables from mutation call to avoid stale closure issues
-        const { subject: mutationSubject, hours: mutationHours, amount: mutationAmount, paymentUrl } = variables;
+        const { subject: mutationSubject, hours: mutationHours, amount: mutationAmount, paymentUrl, studentName: mutationStudentName, studentEmail: mutationStudentEmail } = variables;
         
         // Store booking info and token in sessionStorage for after payment
         const bookingInfo = {
@@ -107,7 +114,9 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
           subject: mutationSubject,
           hours: mutationHours,
           amount: mutationAmount,
-          selectedSlotDetails: availabilities.find(s => s.id === variables.availabilityId),
+          studentName: mutationStudentName,
+          studentEmail: mutationStudentEmail,
+          selectedSlotDetails: allAvailabilities.find(s => s.id === variables.availabilityId),
         };
         sessionStorage.setItem('pendingBooking', JSON.stringify(bookingInfo));
 
@@ -134,6 +143,26 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
       return;
     }
 
+    if (!studentName.trim() || !studentEmail.trim()) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please enter your name and email address.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(studentEmail)) {
+      toast({
+        title: 'Invalid Email',
+        description: 'Please enter a valid email address.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     // Get the payment link for selected subject and hours from database
     const paymentInfo = paymentLinksMap[subject]?.[hours];
     if (!paymentInfo) {
@@ -153,6 +182,8 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
       hours: parseInt(hours),
       amount: paymentInfo.amount,
       paymentUrl: paymentInfo.url,
+      studentName: studentName.trim(),
+      studentEmail: studentEmail.trim(),
     });
   };
 
@@ -160,6 +191,8 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
     setSelectedSlot('');
     setHours('1');
     setSubject('');
+    setStudentName('');
+    setStudentEmail('');
   };
 
   const handleClose = () => {
@@ -182,11 +215,43 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
             Book a Session with {tutor.fullName}
           </DialogTitle>
           <DialogDescription>
-            Select your subject and time slot, then proceed to payment. You will enter your contact details after payment.
+            Enter your details, select your subject and time slot, then proceed to payment.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="studentName">Your Name</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="studentName"
+                  placeholder="Enter your full name"
+                  value={studentName}
+                  onChange={(e) => setStudentName(e.target.value)}
+                  className="pl-10"
+                  data-testid="input-student-name"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="studentEmail">Your Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="studentEmail"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={studentEmail}
+                  onChange={(e) => setStudentEmail(e.target.value)}
+                  className="pl-10"
+                  data-testid="input-student-email"
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="subject">Subject</Label>
