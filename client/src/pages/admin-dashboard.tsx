@@ -19,13 +19,8 @@ import {
 } from 'lucide-react';
 import type { TutorProfile, BookingPayment, Pricing, Availability } from '@shared/schema';
 
-// Featured tutors that admin can manage availability for
-// These IDs must match the tutor IDs in TutorsSection.tsx
-const FEATURED_TUTORS = [
-  { id: 'siyanda-stekela', name: 'Siyanda Stekela', meetUrl: 'https://meet.google.com/auv-hbbs-nre' },
-  { id: 'siboniso-shandu', name: 'Siboniso Shandu', meetUrl: 'https://meet.google.com/krq-nbsr-gnh' },
-  { id: 'thamsanqa-ngonyama', name: 'Thamsanqa Charles Ngonyama', meetUrl: 'https://meet.google.com/tha-msanqa-meet' },
-];
+// Featured tutors are now loaded from the database (tutorProfiles query)
+// This ensures we use the correct database UUIDs for availability
 
 export default function AdminDashboard() {
   const { isAdmin, adminSignOut, userRole, getAdminToken } = useAuth();
@@ -183,8 +178,8 @@ export default function AdminDashboard() {
     });
 
   const getTutorName = (tutorId: string) => {
-    const featured = FEATURED_TUTORS.find(t => t.id === tutorId);
-    return featured?.name || tutorId;
+    const tutor = tutorProfiles.find(t => t.id === tutorId);
+    return tutor?.fullName || tutorId;
   };
 
   const handleSignOut = () => {
@@ -338,9 +333,9 @@ export default function AdminDashboard() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Tutors</SelectItem>
-                      {FEATURED_TUTORS.map((tutor) => (
+                      {approvedTutors.map((tutor) => (
                         <SelectItem key={tutor.id} value={tutor.id}>
-                          {tutor.name}
+                          {tutor.fullName}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -690,9 +685,9 @@ export default function AdminDashboard() {
                   <SelectValue placeholder="Choose a tutor" />
                 </SelectTrigger>
                 <SelectContent>
-                  {FEATURED_TUTORS.map((tutor) => (
+                  {approvedTutors.map((tutor) => (
                     <SelectItem key={tutor.id} value={tutor.id}>
-                      {tutor.name}
+                      {tutor.fullName}
                     </SelectItem>
                   ))}
                 </SelectContent>
