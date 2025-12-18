@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Video, Loader2, ArrowLeft, User, Mail, Phone, Calendar, Clock, BookOpen } from 'lucide-react';
+import { CheckCircle, Video, Loader2, ArrowLeft, User, Mail, Phone, Calendar, Clock, BookOpen, Copy } from 'lucide-react';
 
 interface PendingBooking {
   bookingToken: string;
@@ -35,6 +35,12 @@ export default function PaymentSuccess() {
   const [studentPhone, setStudentPhone] = useState('');
   const [bookingComplete, setBookingComplete] = useState(false);
   const [meetingLink, setMeetingLink] = useState<string | null>(null);
+  const [tutorDetails, setTutorDetails] = useState<{
+    name: string;
+    email: string | null;
+    phone: string | null;
+    googleMeetUrl: string | null;
+  } | null>(null);
 
   useEffect(() => {
     // Retrieve pending booking info from sessionStorage
@@ -61,6 +67,10 @@ export default function PaymentSuccess() {
     onSuccess: (data: any) => {
       setBookingComplete(true);
       setMeetingLink(data.meetingLink || pendingBooking?.tutorMeetLink || null);
+      // Store tutor details from the response
+      if (data.tutorDetails) {
+        setTutorDetails(data.tutorDetails);
+      }
       // Clear the pending booking from storage
       sessionStorage.removeItem('pendingBooking');
       // Invalidate relevant queries
@@ -172,6 +182,47 @@ export default function PaymentSuccess() {
               </div>
             )}
 
+            {/* Tutor Contact Details Section */}
+            {tutorDetails && (
+              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-4 rounded-lg space-y-3">
+                <h3 className="font-semibold text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Your Tutor's Contact Details
+                </h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span className="font-medium">{tutorDetails.name}</span>
+                  </div>
+                  {tutorDetails.email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <a 
+                        href={`mailto:${tutorDetails.email}`}
+                        className="text-blue-700 dark:text-blue-300 hover:underline"
+                        data-testid="link-tutor-email"
+                      >
+                        {tutorDetails.email}
+                      </a>
+                    </div>
+                  )}
+                  {tutorDetails.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <a 
+                        href={`tel:${tutorDetails.phone}`}
+                        className="text-blue-700 dark:text-blue-300 hover:underline"
+                        data-testid="link-tutor-phone"
+                      >
+                        {tutorDetails.phone}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Google Meet Link Section */}
             {meetingLink ? (
               <div className="space-y-4">
                 <p className="font-medium">Your Google Meet session link:</p>
@@ -184,6 +235,21 @@ export default function PaymentSuccess() {
                   <Video className="h-5 w-5 mr-2" />
                   Join Google Meet Session
                 </Button>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                  <span className="truncate flex-1">{meetingLink}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0"
+                    onClick={() => {
+                      navigator.clipboard.writeText(meetingLink);
+                      toast({ title: 'Link Copied', description: 'Meeting link copied to clipboard.' });
+                    }}
+                    data-testid="button-copy-link"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </div>
                 <p className="text-sm text-muted-foreground">
                   Save this link - you'll need it to join your tutoring session at the scheduled time.
                 </p>
@@ -194,15 +260,20 @@ export default function PaymentSuccess() {
               </p>
             )}
 
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setLocation('/')}
-              data-testid="button-back-home"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Home
-            </Button>
+            <div className="pt-2 border-t">
+              <p className="text-xs text-muted-foreground mb-3">
+                Your tutor contact details will be available until your session ends. Please save them now.
+              </p>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setLocation('/')}
+                data-testid="button-back-home"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Home
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

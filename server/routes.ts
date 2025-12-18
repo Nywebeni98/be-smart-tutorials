@@ -12,6 +12,67 @@ const storage = dbStorage;
 const resend = new Resend(process.env.RESEND_API_KEY);
 const NOTIFICATION_EMAIL = 'onlinepresenceimpact@gmail.com';
 
+// Helper function to send session reminder email
+async function sendSessionReminderEmail(reminder: {
+  recipientEmail: string;
+  recipientName: string;
+  tutorName: string;
+  studentName?: string;
+  subject: string;
+  sessionTime: string;
+  meetingLink?: string | null;
+  isStudent: boolean;
+}) {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.log('RESEND_API_KEY not configured, skipping reminder email');
+      return;
+    }
+
+    const sessionDate = new Date(reminder.sessionTime);
+    const formattedTime = sessionDate.toLocaleString('en-ZA', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const { data, error } = await resend.emails.send({
+      from: 'Be Smart Tutorials <onboarding@resend.dev>',
+      to: [reminder.recipientEmail],
+      subject: `Reminder: Your ${reminder.subject} session starts soon!`,
+      html: `
+        <h2>Session Reminder</h2>
+        <p>Hi ${reminder.recipientName},</p>
+        <p>This is a reminder that your tutoring session is starting soon:</p>
+        <ul>
+          <li><strong>Subject:</strong> ${reminder.subject}</li>
+          <li><strong>Time:</strong> ${formattedTime}</li>
+          ${reminder.isStudent ? `<li><strong>Tutor:</strong> ${reminder.tutorName}</li>` : `<li><strong>Student:</strong> ${reminder.studentName || 'Unknown'}</li>`}
+        </ul>
+        ${reminder.meetingLink ? `
+          <p><strong>Join your session:</strong></p>
+          <p><a href="${reminder.meetingLink}" style="background-color: #0a4191; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Join Google Meet</a></p>
+          <p style="font-size: 12px;">Or copy this link: ${reminder.meetingLink}</p>
+        ` : ''}
+        <p>Good luck with your session!</p>
+        <hr>
+        <p style="color: #666; font-size: 12px;">This email was sent automatically by Be Smart Online Tutorials.</p>
+      `,
+    });
+
+    if (error) {
+      console.error('Failed to send reminder email:', error);
+    } else {
+      console.log('Reminder email sent successfully:', data?.id);
+    }
+  } catch (err) {
+    console.error('Error sending reminder email:', err);
+  }
+}
+
 // Helper function to send booking notification email
 async function sendBookingNotificationEmail(booking: {
   studentName: string;
@@ -1051,6 +1112,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tutorProfile = await storage.getTutorProfileById(pendingBooking.tutorId);
       const meetingLink = tutorProfile?.googleMeetUrl || null;
 
+      // Calculate session start and end times from availability slot
+      let sessionStartTime: Date | null = null;
+      let sessionEndTime: Date | null = null;
+      if (pendingBooking.availabilityId) {
+        const availabilities = await storage.getAvailabilitiesByTutor(pendingBooking.tutorId);
+        const slot = availabilities.find(a => a.id === pendingBooking.availabilityId);
+        if (slot && slot.date && slot.startTime && slot.endTime) {
+          // Parse the date (format: "18 December 2024" or similar)
+          const dateStr = slot.date;
+          const startTimeStr = slot.startTime;
+          const endTimeStr = slot.endTime;
+          
+          // Try to parse the date and times
+          try {
+            const dateParts = dateStr.match(/(\d+)\s+(\w+)\s+(\d+)/);
+            if (dateParts) {
+              const day = parseInt(dateParts[1]);
+              const monthName = dateParts[2];
+              const year = parseInt(dateParts[3]);
+              const months: Record<string, number> = {
+                January: 0, February: 1, March: 2, April: 3, May: 4, June: 5,
+                July: 6, August: 7, September: 8, October: 9, November: 10, December: 11
+              };
+              const month = months[monthName];
+              
+              // Parse start time (format: "09:00" or "9:00 AM")
+              const startMatch = startTimeStr.match(/(\d+):(\d+)/);
+              if (startMatch) {
+                const startHour = parseInt(startMatch[1]);
+                const startMin = parseInt(startMatch[2]);
+                sessionStartTime = new Date(year, month, day, startHour, startMin);
+              }
+              
+              // Parse end time
+              const endMatch = endTimeStr.match(/(\d+):(\d+)/);
+              if (endMatch) {
+                const endHour = parseInt(endMatch[1]);
+                const endMin = parseInt(endMatch[2]);
+                sessionEndTime = new Date(year, month, day, endHour, endMin);
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing session times:', e);
+          }
+        }
+      }
+
       // Create the booking payment record (payment completed via Yoco link)
       const bookingPayment = await storage.createBookingPayment({
         tutorId: pendingBooking.tutorId,
@@ -1063,6 +1171,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentStatus: 'completed', // Payment done via Yoco link
         yocoCheckoutId: null,
         meetingLink,
+        subject: pendingBooking.subject || null,
+        sessionStartTime,
+        sessionEndTime,
       });
 
       // Mark availability as booked if provided
@@ -1120,6 +1231,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Booking completed successfully",
         booking: bookingPayment,
         meetingLink,
+        tutorDetails: {
+          name: tutorProfile?.fullName || 'Unknown Tutor',
+          email: tutorProfile?.email || null,
+          phone: tutorProfile?.phone || null,
+          googleMeetUrl: meetingLink,
+        },
+        sessionDetails: {
+          date: slotDate,
+          time: slotTime,
+          subject: pendingBooking.subject,
+          hours: pendingBooking.hours,
+        },
       });
     } catch (error) {
       console.error("Error completing booking:", error);
@@ -1177,6 +1300,216 @@ export async function registerRoutes(app: Express): Promise<Server> {
       adminSessions.delete(adminToken);
     }
     res.json({ success: true, message: "Logged out successfully" });
+  });
+
+  // Get booking details by student email (for viewing active bookings)
+  app.get("/api/bookings/student/:email", async (req, res) => {
+    try {
+      const { email } = req.params;
+      const bookings = await storage.getAllBookingPayments();
+      const now = new Date();
+      
+      // Filter bookings for this student and determine visibility
+      const studentBookings = bookings
+        .filter(b => b.studentEmail === email && b.paymentStatus === 'completed')
+        .map(booking => {
+          // Check if session is still active (before end time)
+          const isActive = booking.isActive && 
+            (!booking.sessionEndTime || new Date(booking.sessionEndTime) > now);
+          
+          // Only return tutor details if session is active
+          return {
+            id: booking.id,
+            subject: booking.subject,
+            hours: booking.hours,
+            amount: booking.amount,
+            sessionStartTime: booking.sessionStartTime,
+            sessionEndTime: booking.sessionEndTime,
+            isActive,
+            // Only include tutor details if session hasn't ended
+            meetingLink: isActive ? booking.meetingLink : null,
+            tutorId: booking.tutorId,
+            createdAt: booking.createdAt,
+          };
+        });
+
+      res.json(studentBookings);
+    } catch (error) {
+      console.error("Error fetching student bookings:", error);
+      res.status(500).json({ error: "Failed to fetch bookings" });
+    }
+  });
+
+  // Get single booking with tutor details (for active sessions only)
+  app.get("/api/bookings/:id/details", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const bookings = await storage.getAllBookingPayments();
+      const booking = bookings.find(b => b.id === id);
+      
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      const now = new Date();
+      const isActive = booking.isActive && 
+        (!booking.sessionEndTime || new Date(booking.sessionEndTime) > now);
+
+      // Only include tutor details if session is active
+      if (isActive) {
+        const tutorProfile = await storage.getTutorProfileById(booking.tutorId);
+        return res.json({
+          ...booking,
+          isActive: true,
+          tutorDetails: {
+            name: tutorProfile?.fullName || 'Unknown Tutor',
+            email: tutorProfile?.email || null,
+            phone: tutorProfile?.phone || null,
+            googleMeetUrl: booking.meetingLink,
+          }
+        });
+      } else {
+        // Session ended - hide sensitive info
+        return res.json({
+          id: booking.id,
+          subject: booking.subject,
+          hours: booking.hours,
+          amount: booking.amount,
+          sessionStartTime: booking.sessionStartTime,
+          sessionEndTime: booking.sessionEndTime,
+          isActive: false,
+          tutorDetails: null,
+          meetingLink: null,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching booking details:", error);
+      res.status(500).json({ error: "Failed to fetch booking details" });
+    }
+  });
+
+  // Admin endpoint to expire old sessions (can be called manually or via cron)
+  app.post("/api/admin/expire-sessions", requireAdmin, async (req, res) => {
+    try {
+      const bookings = await storage.getAllBookingPayments();
+      const now = new Date();
+      let expiredCount = 0;
+
+      for (const booking of bookings) {
+        if (booking.isActive && booking.sessionEndTime && new Date(booking.sessionEndTime) < now) {
+          await storage.updateBookingPayment(booking.id, { isActive: false });
+          expiredCount++;
+        }
+      }
+
+      await storage.createActionLog({
+        actionType: 'sessions_expired',
+        description: `Expired ${expiredCount} session(s)`,
+        userId: 'system',
+      });
+
+      res.json({ success: true, expiredCount });
+    } catch (error) {
+      console.error("Error expiring sessions:", error);
+      res.status(500).json({ error: "Failed to expire sessions" });
+    }
+  });
+
+  // Admin endpoint to get all sessions (past and upcoming)
+  app.get("/api/admin/sessions", requireAdmin, async (req, res) => {
+    try {
+      const bookings = await storage.getAllBookingPayments();
+      const tutorProfiles = await storage.getAllTutorProfiles();
+      const now = new Date();
+
+      const sessions = bookings
+        .filter(b => b.paymentStatus === 'completed')
+        .map(booking => {
+          const tutor = tutorProfiles.find(t => t.id === booking.tutorId);
+          const isUpcoming = booking.sessionStartTime && new Date(booking.sessionStartTime) > now;
+          const isPast = booking.sessionEndTime && new Date(booking.sessionEndTime) < now;
+          
+          return {
+            ...booking,
+            tutorName: tutor?.fullName || 'Unknown Tutor',
+            tutorEmail: tutor?.email,
+            tutorPhone: tutor?.phone,
+            status: isPast ? 'completed' : (isUpcoming ? 'upcoming' : 'in_progress'),
+          };
+        })
+        .sort((a, b) => {
+          const dateA = a.sessionStartTime ? new Date(a.sessionStartTime).getTime() : 0;
+          const dateB = b.sessionStartTime ? new Date(b.sessionStartTime).getTime() : 0;
+          return dateB - dateA; // Most recent first
+        });
+
+      res.json(sessions);
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+      res.status(500).json({ error: "Failed to fetch sessions" });
+    }
+  });
+
+  // Send reminder emails for upcoming sessions (called by scheduler or manually)
+  app.post("/api/admin/send-reminders", requireAdmin, async (req, res) => {
+    try {
+      const bookings = await storage.getAllBookingPayments();
+      const now = new Date();
+      const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+      let remindersSent = 0;
+
+      for (const booking of bookings) {
+        if (
+          booking.paymentStatus === 'completed' &&
+          !booking.reminderSent &&
+          booking.sessionStartTime &&
+          new Date(booking.sessionStartTime) > now &&
+          new Date(booking.sessionStartTime) <= oneHourFromNow
+        ) {
+          const tutorProfile = await storage.getTutorProfileById(booking.tutorId);
+          
+          // Send reminder to student
+          await sendSessionReminderEmail({
+            recipientEmail: booking.studentEmail,
+            recipientName: booking.studentName,
+            tutorName: tutorProfile?.fullName || 'Your Tutor',
+            subject: booking.subject || 'Tutoring Session',
+            sessionTime: booking.sessionStartTime.toISOString(),
+            meetingLink: booking.meetingLink,
+            isStudent: true,
+          });
+
+          // Send reminder to tutor
+          if (tutorProfile?.email) {
+            await sendSessionReminderEmail({
+              recipientEmail: tutorProfile.email,
+              recipientName: tutorProfile.fullName,
+              tutorName: tutorProfile.fullName,
+              studentName: booking.studentName,
+              subject: booking.subject || 'Tutoring Session',
+              sessionTime: booking.sessionStartTime.toISOString(),
+              meetingLink: booking.meetingLink,
+              isStudent: false,
+            });
+          }
+
+          // Mark reminder as sent
+          await storage.updateBookingPayment(booking.id, { reminderSent: true });
+          remindersSent++;
+        }
+      }
+
+      await storage.createActionLog({
+        actionType: 'reminders_sent',
+        description: `Sent ${remindersSent} reminder(s) for upcoming sessions`,
+        userId: 'system',
+      });
+
+      res.json({ success: true, remindersSent });
+    } catch (error) {
+      console.error("Error sending reminders:", error);
+      res.status(500).json({ error: "Failed to send reminders" });
+    }
   });
 
   const httpServer = createServer(app);

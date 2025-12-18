@@ -281,6 +281,14 @@ export class DbStorage implements IStorage {
     return result;
   }
 
+  async updateBookingPayment(id: string, updates: Partial<{ isActive: boolean; reminderSent: boolean }>): Promise<BookingPayment | undefined> {
+    const [result] = await db.update(bookingPayments)
+      .set(updates)
+      .where(eq(bookingPayments.id, id))
+      .returning();
+    return result;
+  }
+
   // Payment link methods
   async createPaymentLink(link: InsertPaymentLink): Promise<PaymentLink> {
     const [result] = await db.insert(paymentLinks).values({

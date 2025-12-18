@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { 
   Users, BookOpen, DollarSign, ShieldCheck, LogOut, 
   CheckCircle, XCircle, Ban, UserCheck, Loader2, AlertCircle,
-  Mail, Calendar, Clock, Plus, Trash2, CalendarDays, Bell
+  Mail, Calendar, Clock, Plus, Trash2, CalendarDays, Bell, Video, Phone,
+  PlayCircle, History, Send
 } from 'lucide-react';
 import type { TutorProfile, BookingPayment, Pricing, Availability, ActionLog } from '@shared/schema';
 
@@ -63,8 +64,93 @@ export default function AdminDashboard() {
     refetchInterval: 30000, // Refetch every 30 seconds for new notifications
   });
 
+  // Session type for admin view
+  interface AdminSession extends BookingPayment {
+    tutorName: string;
+    tutorEmail?: string;
+    tutorPhone?: string;
+    status: 'upcoming' | 'in_progress' | 'completed';
+  }
+
+  // Fetch all sessions for admin
+  const { data: sessions = [], isLoading: loadingSessions, refetch: refetchSessions } = useQuery<AdminSession[]>({
+    queryKey: ['/api/admin/sessions'],
+    enabled: isAdmin,
+    queryFn: async () => {
+      const token = getAdminToken();
+      const response = await fetch('/api/admin/sessions', {
+        headers: {
+          ...(token ? { 'x-admin-token': token } : {}),
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch sessions');
+      return response.json();
+    },
+  });
+
   // Filter booking notifications only
   const bookingNotifications = actionLogs.filter(log => log.actionType === 'booking_completed');
+
+  // Mutation to send session reminders
+  const sendRemindersMutation = useMutation({
+    mutationFn: async () => {
+      const token = getAdminToken();
+      const response = await fetch('/api/admin/send-reminders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'x-admin-token': token } : {}),
+        },
+      });
+      if (!response.ok) throw new Error('Failed to send reminders');
+      return response.json();
+    },
+    onSuccess: (data: { remindersSent: number }) => {
+      toast({
+        title: 'Reminders Sent',
+        description: `${data.remindersSent} reminder(s) sent successfully.`,
+      });
+      refetchSessions();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to send reminders.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Mutation to expire old sessions
+  const expireSessionsMutation = useMutation({
+    mutationFn: async () => {
+      const token = getAdminToken();
+      const response = await fetch('/api/admin/expire-sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'x-admin-token': token } : {}),
+        },
+      });
+      if (!response.ok) throw new Error('Failed to expire sessions');
+      return response.json();
+    },
+    onSuccess: (data: { expiredCount: number }) => {
+      toast({
+        title: 'Sessions Expired',
+        description: `${data.expiredCount} session(s) marked as expired.`,
+      });
+      refetchSessions();
+      queryClient.invalidateQueries({ queryKey: ['/api/booking-payments'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to expire sessions.',
+        variant: 'destructive',
+      });
+    },
+  });
 
   const approveTutorMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -295,7 +381,7 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="notifications" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 max-w-2xl">
+          <TabsList className="grid w-full grid-cols-6 max-w-3xl">
             <TabsTrigger value="notifications" data-testid="tab-notifications">
               <Bell className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">Notifications</span>
@@ -304,6 +390,10 @@ export default function AdminDashboard() {
                   {bookingNotifications.length}
                 </Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="sessions" data-testid="tab-sessions">
+              <Video className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">Sessions</span>
             </TabsTrigger>
             <TabsTrigger value="availability" data-testid="tab-availability">
               <CalendarDays className="h-4 w-4 mr-1" />
@@ -388,6 +478,176 @@ export default function AdminDashboard() {
                         </Card>
                       );
                     })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="sessions" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Video className="h-5 w-5" />
+                      Tutor Sessions
+                    </CardTitle>
+                    <CardDescription>
+                      View all upcoming, ongoing, and completed tutoring sessions
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => sendRemindersMutation.mutate()}
+                      disabled={sendRemindersMutation.isPending}
+                      data-testid="button-send-reminders"
+                    >
+                      {sendRemindersMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4 mr-2" />
+                      )}
+                      Send Reminders
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => expireSessionsMutation.mutate()}
+                      disabled={expireSessionsMutation.isPending}
+                      data-testid="button-expire-sessions"
+                    >
+                      {expireSessionsMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <History className="h-4 w-4 mr-2" />
+                      )}
+                      Expire Old Sessions
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loadingSessions ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-muted-foreground">Loading sessions...</span>
+                  </div>
+                ) : sessions.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No sessions found.</p>
+                    <p className="text-sm">Sessions will appear here once students complete bookings.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Upcoming Sessions */}
+                    <div>
+                      <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
+                        <PlayCircle className="h-5 w-5 text-blue-500" />
+                        Upcoming Sessions ({sessions.filter(s => s.status === 'upcoming').length})
+                      </h3>
+                      {sessions.filter(s => s.status === 'upcoming').length === 0 ? (
+                        <p className="text-sm text-muted-foreground ml-7">No upcoming sessions.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {sessions.filter(s => s.status === 'upcoming').map((session) => (
+                            <Card key={session.id} className="border-l-4 border-l-blue-500" data-testid={`session-upcoming-${session.id}`}>
+                              <CardContent className="pt-4">
+                                <div className="grid gap-4 md:grid-cols-4">
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Student</p>
+                                    <p className="font-medium">{session.studentName}</p>
+                                    <p className="text-sm">{session.studentEmail}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Tutor</p>
+                                    <p className="font-medium">{session.tutorName}</p>
+                                    {session.tutorPhone && (
+                                      <p className="text-sm flex items-center gap-1">
+                                        <Phone className="h-3 w-3" /> {session.tutorPhone}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Session</p>
+                                    <p className="font-medium">{session.subject || 'General'}</p>
+                                    <p className="text-sm">{session.hours} hour(s) - R{session.amount}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Scheduled</p>
+                                    <p className="font-medium">
+                                      {session.sessionStartTime 
+                                        ? new Date(session.sessionStartTime).toLocaleString('en-ZA', { dateStyle: 'medium', timeStyle: 'short' })
+                                        : 'Not set'}
+                                    </p>
+                                    <Badge variant="secondary" className="mt-1">
+                                      {session.reminderSent ? 'Reminder Sent' : 'Pending'}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                {session.meetingLink && (
+                                  <div className="mt-3 pt-3 border-t">
+                                    <a 
+                                      href={session.meetingLink} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                                    >
+                                      <Video className="h-4 w-4" /> {session.meetingLink}
+                                    </a>
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Past Sessions */}
+                    <div className="mt-6">
+                      <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
+                        <History className="h-5 w-5 text-gray-500" />
+                        Completed Sessions ({sessions.filter(s => s.status === 'completed').length})
+                      </h3>
+                      {sessions.filter(s => s.status === 'completed').length === 0 ? (
+                        <p className="text-sm text-muted-foreground ml-7">No completed sessions.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {sessions.filter(s => s.status === 'completed').map((session) => (
+                            <Card key={session.id} className="border-l-4 border-l-gray-400 opacity-75" data-testid={`session-completed-${session.id}`}>
+                              <CardContent className="pt-4">
+                                <div className="grid gap-4 md:grid-cols-4">
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Student</p>
+                                    <p className="font-medium">{session.studentName}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Tutor</p>
+                                    <p className="font-medium">{session.tutorName}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Session</p>
+                                    <p className="font-medium">{session.subject || 'General'}</p>
+                                    <p className="text-sm">R{session.amount}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Completed</p>
+                                    <p className="font-medium">
+                                      {session.sessionEndTime 
+                                        ? new Date(session.sessionEndTime).toLocaleString('en-ZA', { dateStyle: 'medium', timeStyle: 'short' })
+                                        : new Date(session.createdAt).toLocaleString('en-ZA', { dateStyle: 'medium' })}
+                                    </p>
+                                    <Badge variant="secondary" className="bg-green-100 text-green-700">Completed</Badge>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </CardContent>

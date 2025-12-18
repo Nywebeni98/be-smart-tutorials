@@ -99,14 +99,16 @@ The application follows a single-page architecture with all sections on the home
   - Fields: id (UUID), name, email, subject, message, createdAt (timestamp)
 
 - **tutor_profiles table:** For tutor information
-  - Fields: id, supabaseUserId, email, fullName, photoUrl, subjects (array), hourlyRate, googleMeetUrl, bio, isApproved, isBlocked, createdAt, updatedAt
+  - Fields: id, supabaseUserId, email, fullName, phone, photoUrl, subjects (array), hourlyRate, googleMeetUrl, bio, isApproved, isBlocked, createdAt, updatedAt
+  - Note: phone stores South African mobile numbers (+27 format)
 
 - **tutor_availability table:** For time slots (stored permanently)
   - Fields: id, tutorId, day, date, startTime, endTime, notes, isBooked, createdAt
   - Note: Time slots persist until manually deleted
 
 - **booking_payments table:** For tracking student bookings
-  - Fields: id, studentName, studentEmail, studentPhone, tutorId, availabilityId, hours, amount, paymentStatus, yocoCheckoutId, meetingLink, createdAt
+  - Fields: id, studentName, studentEmail, studentPhone, tutorId, availabilityId, hours, amount, paymentStatus, yocoCheckoutId, meetingLink, isActive, sessionStartTime, sessionEndTime, reminderSent, subject, createdAt
+  - Note: isActive tracks whether session is still valid (tutor details visible), sessionStartTime/sessionEndTime for scheduling, reminderSent prevents duplicate reminders
 
 - **payment_links table:** For Yoco payment URLs (stored in database)
   - Fields: id, subject, hours, amount, url, isActive, createdAt, updatedAt
@@ -198,6 +200,35 @@ The application follows a single-page architecture with all sections on the home
 **API Endpoints:**
 - `POST /api/booking/create-token` - Creates booking token before payment
 - `POST /api/booking-payments/complete` - Completes booking after payment with token validation
+- `GET /api/bookings/:id/details` - Get booking details with conditional tutor info (hidden after session ends)
+- `GET /api/admin/sessions` - Get all sessions with tutor info for admin
+- `POST /api/admin/send-reminders` - Trigger reminder emails for upcoming sessions
+- `POST /api/admin/expire-sessions` - Mark past sessions as inactive
+
+### Session Lifecycle Management
+
+**Session Tracking:**
+- Sessions have `sessionStartTime` and `sessionEndTime` calculated from availability slot
+- `isActive` flag controls whether tutor details are visible to students
+- After `sessionEndTime` passes, tutor contact details are hidden from the booking details API
+
+**Tutor Contact Display (Post-Payment):**
+- After payment completion, students see tutor name, email, phone, and Google Meet link
+- Copy button allows easy copying of meeting link
+- Contact details are only shown once during confirmation; refreshing clears them
+- Backend `/api/bookings/:id/details` enforces session expiration
+
+**Reminder System:**
+- `sendSessionReminderEmail` sends reminders to both student and tutor
+- Checks for sessions starting within 1 hour
+- `reminderSent` flag prevents duplicate reminder emails
+- Admin can trigger reminders manually via admin dashboard
+
+**Admin Sessions Tab:**
+- View all upcoming and completed sessions
+- Shows full student/tutor details including meeting links
+- Buttons to send reminders and expire old sessions
+- Sessions grouped by status (upcoming/completed)
 
 ### External Dependencies
 
