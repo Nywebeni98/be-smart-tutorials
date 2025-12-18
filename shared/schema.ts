@@ -35,6 +35,7 @@ export const tutorProfiles = pgTable("tutor_profiles", {
   supabaseUserId: text("supabase_user_id").notNull().unique(),
   email: text("email").notNull().unique(),
   fullName: text("full_name").notNull(),
+  phone: text("phone"),
   photoUrl: text("photo_url"),
   subjects: text("subjects").array(),
   hourlyRate: integer("hourly_rate").default(200),
@@ -81,6 +82,11 @@ export const bookingPayments = pgTable("booking_payments", {
   paymentStatus: text("payment_status").default("pending").notNull(),
   yocoCheckoutId: text("yoco_checkout_id"),
   meetingLink: text("meeting_link"),
+  subject: text("subject"),
+  sessionStartTime: timestamp("session_start_time"),
+  sessionEndTime: timestamp("session_end_time"),
+  isActive: boolean("is_active").default(true),
+  reminderSent: boolean("reminder_sent").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -163,6 +169,7 @@ export const insertTutorProfileSchema = createInsertSchema(tutorProfiles).omit({
   supabaseUserId: z.string().min(1, "User ID is required"),
   email: z.string().email("Invalid email address"),
   fullName: z.string().min(2, "Name must be at least 2 characters"),
+  phone: z.string().optional().nullable(),
   photoUrl: z.string().url().optional().or(z.literal("")).nullable(),
   subjects: z.array(z.string()).optional().nullable(),
   hourlyRate: z.number().min(0).optional().nullable(),
@@ -182,6 +189,8 @@ export const insertPricingSchema = createInsertSchema(pricing).omit({
 export const insertBookingPaymentSchema = createInsertSchema(bookingPayments).omit({
   id: true,
   createdAt: true,
+  isActive: true,
+  reminderSent: true,
 }).extend({
   studentName: z.string().min(2, "Name must be at least 2 characters"),
   studentEmail: z.string().email("Invalid email address"),
@@ -193,6 +202,9 @@ export const insertBookingPaymentSchema = createInsertSchema(bookingPayments).om
   paymentStatus: z.string().optional(),
   yocoCheckoutId: z.string().optional().nullable(),
   meetingLink: z.string().optional().nullable(),
+  subject: z.string().optional().nullable(),
+  sessionStartTime: z.date().optional().nullable(),
+  sessionEndTime: z.date().optional().nullable(),
 });
 
 export const tutorSignUpSchema = z.object({
