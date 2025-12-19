@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { AdminAuthModal } from '@/components/AdminAuthModal';
+import { InstallAppButton } from '@/components/InstallAppButton';
 import { useLocation } from 'wouter';
 import logoUrl from '@assets/Blue Minimal Idea Free Education Logo_1764023278343.png';
 
@@ -144,6 +145,8 @@ export function Header() {
                   <ShieldCheck className="h-4 w-4 mr-2" />
                   Admin
                 </Button>
+                
+                <InstallAppButton />
               </div>
             )}
           </div>
@@ -233,6 +236,10 @@ export function Header() {
                     <ShieldCheck className="h-4 w-4 mr-2" />
                     Admin Login
                   </Button>
+                  
+                  <div className="pt-2">
+                    <InstallAppButton />
+                  </div>
                 </div>
               )}
             </div>
