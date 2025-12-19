@@ -1,8 +1,53 @@
 // Hero section showcasing Be Smart Online Tutorials for Cape Town, South Africa
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { GraduationCap, BookOpen } from 'lucide-react';
+import { GraduationCap, Download, Smartphone } from 'lucide-react';
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
 
 export function Hero() {
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isIOS, setIsIOS] = useState(false);
+  const [showIOSModal, setShowIOSModal] = useState(false);
+
+  useEffect(() => {
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(isIOSDevice);
+
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (isIOS) {
+      setShowIOSModal(true);
+      return;
+    }
+
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      setDeferredPrompt(null);
+    } else {
+      // Fallback: scroll to subjects if install not available
+      const element = document.querySelector('#subjects');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   // Smooth scroll to sections when buttons are clicked
   const scrollToSection = (sectionId: string) => {
     const element = document.querySelector(sectionId);
@@ -61,19 +106,19 @@ export function Hero() {
 
           {/* Call-to-action buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            {/* Primary CTA - Browse Subjects */}
+            {/* Primary CTA - Install App */}
             <Button
               size="lg"
-              onClick={() => scrollToSection('#subjects')}
+              onClick={handleInstallClick}
               className="min-w-[200px] text-base font-semibold shadow-lg hover:shadow-xl transition-all"
               style={{
-                backgroundColor: 'hsl(var(--brand-yellow))',
-                color: 'hsl(var(--brand-blue))',
+                backgroundColor: 'hsl(var(--brand-orange))',
+                color: 'white',
               }}
-              data-testid="button-browse-subjects"
+              data-testid="button-install-app"
             >
-              <BookOpen className="w-5 h-5 mr-2" />
-              Browse Subjects
+              <Download className="w-5 h-5 mr-2" />
+              Install App
             </Button>
 
             {/* Secondary CTA - Get Started */}
@@ -88,6 +133,42 @@ export function Hero() {
               Get Started
             </Button>
           </div>
+
+          {/* iOS Instructions Modal */}
+          {showIOSModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowIOSModal(false)}>
+              <div 
+                className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <Smartphone className="w-6 h-6" style={{ color: 'hsl(var(--brand-blue))' }} />
+                  <h3 className="font-heading font-semibold text-lg text-foreground">Install on iPhone</h3>
+                </div>
+                <ol className="space-y-3 text-sm text-muted-foreground">
+                  <li className="flex gap-2">
+                    <span className="font-bold" style={{ color: 'hsl(var(--brand-blue))' }}>1.</span>
+                    <span>Tap the <strong>Share</strong> button at the bottom of Safari</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-bold" style={{ color: 'hsl(var(--brand-blue))' }}>2.</span>
+                    <span>Scroll down and tap <strong>"Add to Home Screen"</strong></span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-bold" style={{ color: 'hsl(var(--brand-blue))' }}>3.</span>
+                    <span>Tap <strong>"Add"</strong> in the top right</span>
+                  </li>
+                </ol>
+                <Button 
+                  className="w-full mt-4"
+                  onClick={() => setShowIOSModal(false)}
+                  data-testid="button-close-ios-modal"
+                >
+                  Got it!
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Trust indicators */}
           <div className="pt-12 flex flex-wrap items-center justify-center gap-8 text-white/80">
