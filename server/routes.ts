@@ -997,21 +997,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Verify availability exists and is not already booked (if provided)
+      // For pay-first flow, availability slot is optional
+      // Tutor and student can schedule the actual time after payment
+      // If availabilityId is provided, verify it exists and is not booked
       if (availabilityId) {
-        const availabilities = await storage.getAvailabilitiesByTutor(tutorId);
-        const slot = availabilities.find(a => a.id === availabilityId);
-        if (!slot) {
-          return res.status(400).json({
-            success: false,
-            message: "Invalid availability slot.",
-          });
-        }
-        if (slot.isBooked) {
-          return res.status(400).json({
-            success: false,
-            message: "This time slot is already booked. Please choose another.",
-          });
+        try {
+          const availabilities = await storage.getAvailabilitiesByTutor(tutorId);
+          const slot = availabilities.find(a => a.id === availabilityId);
+          if (slot && slot.isBooked) {
+            return res.status(400).json({
+              success: false,
+              message: "This time slot is already booked. Please choose another.",
+            });
+          }
+          // If slot not found, just ignore it and proceed (can be scheduled later)
+        } catch (e) {
+          // If there's an error checking availability, just proceed
+          console.log("Note: Could not verify availability slot, proceeding without slot validation");
         }
       }
 
