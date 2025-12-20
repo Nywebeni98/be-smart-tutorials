@@ -195,7 +195,7 @@ export function TutorsSection() {
         bio: tutor.bio,
         subjects: tutor.subjects,
         hourlyRate: tutor.hourlyRate,
-        photoUrl: tutor.image,
+        photoUrl: String(tutor.image),
         googleMeetUrl: tutor.googleMeetUrl,
         isApproved: true,
         isBlocked: false,
@@ -239,7 +239,7 @@ export function TutorsSection() {
                 >
                   <Avatar className="w-48 h-48 mb-6 border-4 border-white shadow-lg">
                     <AvatarImage 
-                      src={tutor.image} 
+                      src={String(tutor.image)} 
                       alt={tutor.name}
                       className="object-cover object-top"
                     />
