@@ -134,10 +134,10 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
   });
 
   const handleProceedToPayment = () => {
-    if (!tutor || !selectedSlot || !subject) {
+    if (!tutor || !subject) {
       toast({
         title: 'Missing Information',
-        description: 'Please select a subject and an available time slot.',
+        description: 'Please select a subject.',
         variant: 'destructive',
       });
       return;
@@ -177,7 +177,7 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
     // Create a booking token on the server before redirecting to payment
     createTokenMutation.mutate({
       tutorId: tutor.id,
-      availabilityId: selectedSlot,
+      availabilityId: selectedSlot || '', // Make time slot optional - can schedule after payment
       subject,
       hours: parseInt(hours),
       amount: paymentInfo.amount,
