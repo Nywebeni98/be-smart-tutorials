@@ -10,6 +10,7 @@ import type { TutorProfile } from '@shared/schema';
 import siyandaImage from '@assets/WhatsApp_Image_2025-12-01_at_22.46.26_1114b9ca_1764881684167.jpg';
 import sibonisoImage from '@assets/WhatsApp_Image_2025-11-23_at_10.05.37_30c8290f_1764882512867.jpg';
 import thamsanqaImage from '@assets/WhatsApp_Image_2025-12-05_at_11.28.31_2db17684_1764958250135.jpg';
+import luthoImage from '@assets/WhatsApp_Image_2025-12-19_at_21.46.00_22d812e3_1766261614324.jpg';
 
 interface Tutor {
   id: string;
@@ -120,6 +121,37 @@ const tutors: Tutor[] = [
         icon: BookOpen,
         title: 'Humanities Expert',
         description: 'Passionate about English, History and Computer Applications Technology, helping learners develop critical thinking skills.',
+      },
+    ],
+  },
+  {
+    id: 'lutho-hanjana',
+    name: 'Lutho Hanjana',
+    title: 'Multi-Subject Tutor',
+    image: luthoImage,
+    subjects: ['Life Sciences', 'English', 'Maths', 'Physics'],
+    experience: 'Qualified Health Professional',
+    education: 'Qualification in Opticianry - Cape Peninsula University of Technology',
+    bio: 'I have a qualification in Opticianry that I obtained at the Cape Peninsula University of Capetown in the Faculty of Health Science. My aim is to empower the youth with knowledge that will shape their future.',
+    quote: 'Education is the key to unlocking potential. I am committed to helping every student achieve their academic goals.',
+    hourlyRate: 200,
+    physicsRate: 250,
+    googleMeetUrl: 'https://meet.google.com/tgv-tccd-ges',
+    highlights: [
+      {
+        icon: GraduationCap,
+        title: 'Health Science Background',
+        description: 'Qualified in Opticianry from Cape Peninsula University of Technology, bringing unique scientific perspective to tutoring.',
+      },
+      {
+        icon: Users,
+        title: 'Youth Empowerment Focus',
+        description: 'Passionate about empowering young students with knowledge and skills to shape their future success.',
+      },
+      {
+        icon: Star,
+        title: 'Multi-Subject Expert',
+        description: 'Teaches Life Sciences, English, Mathematics, and Physics across multiple grade levels with dedication and care.',
       },
     ],
   },
