@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { AdminAuthModal } from '@/components/AdminAuthModal';
-import { InstallAppButton } from '@/components/InstallAppButton';
 import { useLocation } from 'wouter';
 import logoUrl from '@assets/Blue Minimal Idea Free Education Logo_1764023278343.png';
 
@@ -147,8 +146,6 @@ export function Header() {
                 </Button>
               </div>
             )}
-            
-            <InstallAppButton />
           </div>
 
           {/* Mobile menu button */}
@@ -238,10 +235,6 @@ export function Header() {
                   </Button>
                 </div>
               )}
-              
-              <div className="pt-3">
-                <InstallAppButton />
-              </div>
             </div>
           </nav>
         </div>
