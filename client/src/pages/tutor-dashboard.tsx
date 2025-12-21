@@ -15,7 +15,7 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import type { Availability } from '@shared/schema';
 
 export default function TutorDashboard() {
-  const { user, tutorProfile, userRole, signOut } = useAuth();
+  const { user, tutorProfile, userRole, signOut, loading } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -110,6 +110,18 @@ export default function TutorDashboard() {
     await signOut();
     setLocation('/');
   };
+
+  // Show loading state while auth is being checked
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">Checking your account...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Show sign-in screen if not logged in as tutor
   if (!user || userRole !== 'tutor') {
