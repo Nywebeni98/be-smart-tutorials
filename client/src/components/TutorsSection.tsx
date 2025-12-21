@@ -216,7 +216,7 @@ export function TutorsSection() {
             style={{ color: 'hsl(var(--brand-blue))' }}
             data-testid="text-tutors-heading"
           >
-            Meet Our {tutors.length} Tutors
+            Meet Our Tutors
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto" data-testid="text-tutors-subtitle">
             Our dedicated team of qualified educators are passionate about helping students achieve their academic goals.

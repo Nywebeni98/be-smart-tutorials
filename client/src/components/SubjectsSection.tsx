@@ -1,76 +1,15 @@
 // Subjects and courses display section with interactive cards
-import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { 
   Calculator, 
   Beaker, 
   BookOpen, 
   Languages, 
   Brain,
-  Computer,
-  Download,
-  Smartphone,
-  X
+  Computer
 } from 'lucide-react';
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
-
 export function SubjectsSection() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showInstallBanner, setShowInstallBanner] = useState(true);
-  const [isIOS, setIsIOS] = useState(false);
-  const [showIOSModal, setShowIOSModal] = useState(false);
-
-  useEffect(() => {
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
-    
-    setIsIOS(isIOSDevice);
-    
-    // Hide banner if already installed as standalone app
-    if (isInStandaloneMode) {
-      setShowInstallBanner(false);
-    }
-
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowInstallBanner(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-
-    window.addEventListener('appinstalled', () => {
-      setShowInstallBanner(false);
-      setDeferredPrompt(null);
-    });
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-    };
-  }, []);
-
-  const handleInstallClick = async () => {
-    if (isIOS) {
-      setShowIOSModal(true);
-      return;
-    }
-
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      setShowInstallBanner(false);
-    }
-    setDeferredPrompt(null);
-  };
-
   // Subject cards data with icons and descriptions
   const subjects = [
     {
@@ -134,75 +73,6 @@ export function SubjectsSection() {
   return (
     <section id="subjects" className="py-16 lg:py-24 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Install App Banner - Orange */}
-        {showInstallBanner && (
-          <div 
-            className="mb-8 p-4 rounded-lg flex flex-col sm:flex-row items-center justify-center gap-4 relative"
-            style={{ backgroundColor: 'hsl(var(--brand-orange))' }}
-            data-testid="banner-install-app"
-          >
-            <button
-              onClick={() => setShowInstallBanner(false)}
-              className="absolute top-2 right-2 p-1 rounded-full hover:bg-white/20 transition-colors"
-              aria-label="Close banner"
-            >
-              <X className="w-4 h-4 text-white" />
-            </button>
-            <div className="flex items-center gap-3 text-white">
-              <Smartphone className="w-6 h-6" />
-              <span className="font-semibold text-lg">Get our app on your phone!</span>
-            </div>
-            <Button
-              onClick={handleInstallClick}
-              className="font-bold px-6"
-              style={{ 
-                backgroundColor: 'white',
-                color: 'hsl(var(--brand-orange))'
-              }}
-              data-testid="button-install-app-banner"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Install App
-            </Button>
-          </div>
-        )}
-
-        {/* iOS Instructions Modal */}
-        {showIOSModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowIOSModal(false)}>
-            <div 
-              className="bg-background rounded-lg p-6 max-w-sm w-full shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <Smartphone className="w-6 h-6" style={{ color: 'hsl(var(--brand-blue))' }} />
-                <h3 className="font-heading font-semibold text-lg">Install on iPhone</h3>
-              </div>
-              <ol className="space-y-3 text-sm text-muted-foreground">
-                <li className="flex gap-2">
-                  <span className="font-bold" style={{ color: 'hsl(var(--brand-blue))' }}>1.</span>
-                  <span>Tap the <strong>Share</strong> button at the bottom of Safari</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-bold" style={{ color: 'hsl(var(--brand-blue))' }}>2.</span>
-                  <span>Scroll down and tap <strong>"Add to Home Screen"</strong></span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-bold" style={{ color: 'hsl(var(--brand-blue))' }}>3.</span>
-                  <span>Tap <strong>"Add"</strong> in the top right</span>
-                </li>
-              </ol>
-              <Button 
-                className="w-full mt-4"
-                onClick={() => setShowIOSModal(false)}
-                data-testid="button-close-ios-modal"
-              >
-                Got it!
-              </Button>
-            </div>
-          </div>
-        )}
-
         {/* Section header */}
         <div className="text-center mb-12 lg:mb-16">
           <h2 
