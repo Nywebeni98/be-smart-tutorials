@@ -6,7 +6,6 @@ import { AboutSection } from '@/components/AboutSection';
 import { TutorsSection } from '@/components/TutorsSection';
 import { VideoSection } from '@/components/VideoSection';
 import { AppointmentSection } from '@/components/AppointmentSection';
-import { AvailabilityManager } from '@/components/AvailabilityManager';
 import { ContactSection } from '@/components/ContactSection';
 import { Footer } from '@/components/Footer';
 
@@ -35,9 +34,6 @@ export default function Home() {
         
         {/* Book an appointment */}
         <AppointmentSection />
-        
-        {/* Manage availability (for tutors) */}
-        <AvailabilityManager />
         
         {/* Contact form and information */}
         <ContactSection />
