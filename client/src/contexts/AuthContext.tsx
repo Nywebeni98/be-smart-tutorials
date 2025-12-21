@@ -13,6 +13,7 @@ interface AuthContextType {
   userRole: UserRole;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  tutorSignInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   tutorSignUp: (email: string, password: string, fullName: string) => Promise<{ error?: string }>;
   tutorSignIn: (email: string, password: string) => Promise<{ error?: string }>;
@@ -33,6 +34,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Check if email is allowed for tutor access (via server API)
+  const checkTutorEmailAllowed = async (email: string): Promise<{ allowed: boolean; isAdmin?: boolean; tutorId?: string }> => {
+    try {
+      const response = await fetch(`/api/auth/check-tutor-email/${encodeURIComponent(email)}`);
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (error) {
+      console.error('Error checking tutor email:', error);
+    }
+    return { allowed: false };
+  };
+
   // Fetch tutor profile if user is a tutor
   const fetchTutorProfile = async (userId: string) => {
     try {
@@ -49,6 +63,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return null;
   };
 
+  // Fetch tutor profile by email (for Google OAuth tutors)
+  const fetchTutorProfileByEmail = async (email: string) => {
+    try {
+      const response = await fetch(`/api/tutor-profiles/email/${encodeURIComponent(email)}`);
+      if (response.ok) {
+        const profile = await response.json();
+        setTutorProfile(profile);
+        setUserRole('tutor');
+        return profile;
+      }
+    } catch (error) {
+      console.error('Error fetching tutor profile by email:', error);
+    }
+    return null;
+  };
+
   const refreshTutorProfile = async () => {
     if (user) {
       await fetchTutorProfile(user.id);
@@ -61,8 +91,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Check if user is a tutor
-        const profile = await fetchTutorProfile(session.user.id);
+        // First check if user is a tutor by user ID
+        let profile = await fetchTutorProfile(session.user.id);
+        
+        // If no profile by ID, check by email (for Google OAuth tutors)
+        if (!profile && session.user.email) {
+          profile = await fetchTutorProfileByEmail(session.user.email);
+        }
+        
         if (!profile) {
           // User is a student (Google OAuth user without tutor profile)
           setUserRole('student');
@@ -86,7 +122,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        const profile = await fetchTutorProfile(session.user.id);
+        // First check if user is a tutor by user ID
+        let profile = await fetchTutorProfile(session.user.id);
+        
+        // If no profile by ID, check by email (for Google OAuth tutors)
+        if (!profile && session.user.email) {
+          profile = await fetchTutorProfileByEmail(session.user.email);
+        }
+        
         if (!profile) {
           setUserRole('student');
         }
@@ -111,6 +154,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     if (error) {
       console.error('Error signing in with Google:', error.message);
+    }
+  };
+
+  // Sign in with Google OAuth (for tutors - redirects to tutor dashboard)
+  const tutorSignInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/tutor-dashboard`,
+      },
+    });
+    if (error) {
+      console.error('Error signing in with Google (tutor):', error.message);
     }
   };
 
@@ -332,6 +388,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userRole,
     loading,
     signInWithGoogle,
+    tutorSignInWithGoogle,
     signOut,
     tutorSignUp,
     tutorSignIn,

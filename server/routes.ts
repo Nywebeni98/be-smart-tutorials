@@ -518,6 +518,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get tutor profile by email (for Google OAuth sign-in)
+  app.get("/api/tutor-profiles/email/:email", async (req, res) => {
+    try {
+      const { email } = req.params;
+      const profiles = await storage.getAllTutorProfiles();
+      const profile = profiles.find(p => p.email.toLowerCase() === email.toLowerCase());
+      
+      if (!profile) {
+        return res.status(404).json({
+          success: false,
+          message: "Tutor profile not found for this email",
+        });
+      }
+      res.json(profile);
+    } catch (error) {
+      console.error("Error fetching tutor profile by email:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
+  // Check if email is allowed for tutor access
+  app.get("/api/auth/check-tutor-email/:email", async (req, res) => {
+    try {
+      const { email } = req.params;
+      const emailLower = email.toLowerCase();
+      
+      // Admin email is always allowed (using configured notification email)
+      if (emailLower === NOTIFICATION_EMAIL.toLowerCase()) {
+        return res.json({ allowed: true, isAdmin: true });
+      }
+      
+      // Check if email belongs to a registered tutor
+      const profiles = await storage.getAllTutorProfiles();
+      const tutorProfile = profiles.find(p => p.email.toLowerCase() === emailLower);
+      
+      if (tutorProfile) {
+        return res.json({ 
+          allowed: true, 
+          isAdmin: false,
+          tutorId: tutorProfile.id,
+          isApproved: tutorProfile.isApproved,
+          isBlocked: tutorProfile.isBlocked
+        });
+      }
+      
+      res.json({ allowed: false });
+    } catch (error) {
+      console.error("Error checking tutor email:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
   app.get("/api/tutor-profiles/:id", async (req, res) => {
     try {
       const { id } = req.params;

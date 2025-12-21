@@ -11,11 +11,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, User, Mail, Phone, Link2, DollarSign, BookOpen, LogOut, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Calendar, Clock, User, Mail, Phone, Link2, DollarSign, BookOpen, LogOut, AlertCircle, CheckCircle, Loader2, GraduationCap } from 'lucide-react';
+import { SiGoogle } from 'react-icons/si';
 import type { Availability, BookingPayment } from '@shared/schema';
 
 export default function TutorDashboard() {
-  const { user, tutorProfile, userRole, signOut, refreshTutorProfile } = useAuth();
+  const { user, tutorProfile, userRole, signOut, refreshTutorProfile, tutorSignInWithGoogle } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -104,16 +105,39 @@ export default function TutorDashboard() {
   if (!user || userRole !== 'tutor') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="max-w-md">
-          <CardContent className="pt-6 text-center">
-            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
-            <p className="text-muted-foreground mb-4">
-              You need to sign in as a tutor to access this page.
-            </p>
-            <Button onClick={() => setLocation('/')} data-testid="button-go-home">
-              Go to Home
+        <Card className="max-w-md w-full mx-4">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 h-16 w-16 rounded-full flex items-center justify-center" style={{ backgroundColor: 'hsl(var(--brand-blue))' }}>
+              <GraduationCap className="h-8 w-8 text-white" />
+            </div>
+            <CardTitle className="text-2xl">Tutor Sign In</CardTitle>
+            <CardDescription>
+              Sign in with your registered tutor email to access your dashboard
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button 
+              onClick={tutorSignInWithGoogle} 
+              className="w-full gap-2"
+              variant="outline"
+              data-testid="button-tutor-google-signin"
+            >
+              <SiGoogle className="h-4 w-4" />
+              Continue with Google
             </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              Only registered tutor emails can access this dashboard. If you're not a tutor, please contact the administrator.
+            </p>
+            <div className="pt-2 border-t">
+              <Button 
+                variant="ghost" 
+                className="w-full"
+                onClick={() => setLocation('/')} 
+                data-testid="button-go-home"
+              >
+                Back to Home
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -381,7 +405,7 @@ export default function TutorDashboard() {
                           variant="ghost"
                           size="sm"
                           onClick={() => deleteAvailabilityMutation.mutate(slot.id)}
-                          disabled={deleteAvailabilityMutation.isPending || slot.isBooked}
+                          disabled={deleteAvailabilityMutation.isPending || !!slot.isBooked}
                           data-testid={`button-delete-slot-${slot.id}`}
                         >
                           Remove
