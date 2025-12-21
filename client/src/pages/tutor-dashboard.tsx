@@ -3,7 +3,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +16,6 @@ import type { Availability } from '@shared/schema';
 export default function TutorDashboard() {
   const { user, tutorProfile, userRole, signOut, loading } = useAuth();
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   // Direct Google sign-in handler with error feedback
@@ -108,7 +106,7 @@ export default function TutorDashboard() {
 
   const handleSignOut = async () => {
     await signOut();
-    setLocation('/');
+    // Stay on tutor dashboard (will show sign-in screen)
   };
 
   // Show loading state while auth is being checked
@@ -160,16 +158,6 @@ export default function TutorDashboard() {
             <p className="text-xs text-center text-muted-foreground">
               Only registered tutor emails can access this page. Contact the administrator if you need access.
             </p>
-            <div className="pt-2 border-t">
-              <Button 
-                variant="ghost" 
-                className="w-full"
-                onClick={() => setLocation('/')} 
-                data-testid="button-go-home"
-              >
-                Back to Home
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </div>
