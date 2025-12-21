@@ -11,12 +11,55 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, LogOut, Loader2, GraduationCap, Plus, Trash2 } from 'lucide-react';
 import { SiGoogle } from 'react-icons/si';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import type { Availability } from '@shared/schema';
 
 export default function TutorDashboard() {
-  const { user, tutorProfile, userRole, signOut, tutorSignInWithGoogle } = useAuth();
+  const { user, tutorProfile, userRole, signOut } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const [isSigningIn, setIsSigningIn] = useState(false);
+
+  // Direct Google sign-in handler with error feedback
+  const handleGoogleSignIn = async () => {
+    if (!isSupabaseConfigured) {
+      toast({
+        title: 'Configuration Error',
+        description: 'Google sign-in is not configured. Please contact the administrator.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSigningIn(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/tutor-dashboard`,
+        },
+      });
+      
+      if (error) {
+        console.error('Google sign-in error:', error);
+        toast({
+          title: 'Sign In Failed',
+          description: error.message || 'Could not connect to Google. Please try again.',
+          variant: 'destructive',
+        });
+        setIsSigningIn(false);
+      }
+      // If no error, the browser will redirect to Google
+    } catch (err) {
+      console.error('Unexpected error during sign-in:', err);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred. Please try again.',
+        variant: 'destructive',
+      });
+      setIsSigningIn(false);
+    }
+  };
 
   const [availabilityForm, setAvailabilityForm] = useState({
     date: '',
@@ -84,13 +127,23 @@ export default function TutorDashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             <Button 
-              onClick={tutorSignInWithGoogle} 
+              onClick={handleGoogleSignIn} 
               className="w-full gap-2"
               variant="outline"
+              disabled={isSigningIn}
               data-testid="button-tutor-google-signin"
             >
-              <SiGoogle className="h-4 w-4" />
-              Continue with Google
+              {isSigningIn ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <SiGoogle className="h-4 w-4" />
+                  Continue with Google
+                </>
+              )}
             </Button>
             <p className="text-xs text-center text-muted-foreground">
               Only registered tutor emails can access this page. Contact the administrator if you need access.
