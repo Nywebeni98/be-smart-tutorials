@@ -210,15 +210,18 @@ export class DbStorage implements IStorage {
     return result;
   }
 
-  // Get tutor profile by email
+  // Get tutor profile by email (case-insensitive)
   async getTutorProfileByEmail(email: string): Promise<TutorProfile | undefined> {
-    const [result] = await db.select().from(tutorProfiles).where(eq(tutorProfiles.email, email));
-    return result;
+    const normalizedEmail = email.toLowerCase().trim();
+    const allTutors = await db.select().from(tutorProfiles);
+    return allTutors.find(t => t.email.toLowerCase().trim() === normalizedEmail);
   }
 
   // Set tutor password (hashed)
   async setTutorPassword(id: string, password: string): Promise<boolean> {
-    const hash = await hashPassword(password);
+    // For tutor auth, password should be the email address (normalized to lowercase)
+    const normalizedPassword = password.toLowerCase().trim();
+    const hash = await hashPassword(normalizedPassword);
     const [result] = await db.update(tutorProfiles)
       .set({ passwordHash: hash, updatedAt: new Date() })
       .where(eq(tutorProfiles.id, id))
@@ -226,13 +229,15 @@ export class DbStorage implements IStorage {
     return !!result;
   }
 
-  // Verify tutor password
+  // Verify tutor password (case-insensitive email and password)
   async verifyTutorPassword(email: string, password: string): Promise<TutorProfile | null> {
-    const tutor = await this.getTutorProfileByEmail(email);
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedPassword = password.toLowerCase().trim();
+    const tutor = await this.getTutorProfileByEmail(normalizedEmail);
     if (!tutor || !tutor.passwordHash) {
       return null;
     }
-    const isValid = await verifyPassword(password, tutor.passwordHash);
+    const isValid = await verifyPassword(normalizedPassword, tutor.passwordHash);
     return isValid ? tutor : null;
   }
 
@@ -444,7 +449,7 @@ export async function initializeDatabase(storage: DbStorage) {
       {
         supabaseUserId: 'siyanda-stekela',
         fullName: 'Siyanda Stekela',
-        email: 'siyanda@besmartonline.co.za',
+        email: 'siyandastekela@gmail.com',
         bio: 'Professional Mathematics tutor with over 9 years of tutoring experience.',
         subjects: ['Maths', 'CAPS Curriculum', 'Cambridge Curriculum'],
         hourlyRate: 200,
@@ -453,7 +458,7 @@ export async function initializeDatabase(storage: DbStorage) {
       {
         supabaseUserId: 'siboniso-shandu',
         fullName: 'Siboniso Shandu',
-        email: 'siboniso@besmartonline.co.za',
+        email: 'sbo.bernard@gmail.com',
         bio: 'Dedicated tutor in Mathematics and Physical Sciences with over 8 years of experience.',
         subjects: ['Mathematics', 'Physical Sciences'],
         hourlyRate: 200,
@@ -462,11 +467,20 @@ export async function initializeDatabase(storage: DbStorage) {
       {
         supabaseUserId: 'thamsanqa-ngonyama',
         fullName: 'Thamsanqa Charles Ngonyama',
-        email: 'thamsanqa@besmartonline.co.za',
+        email: 'ngonyama08@gmail.com',
         bio: 'Qualified educator specializing in English, History, and CAT.',
         subjects: ['English', 'History', 'CAT'],
         hourlyRate: 200,
         googleMeetUrl: 'https://meet.google.com/tha-msanqa-meet',
+      },
+      {
+        supabaseUserId: 'lutho-hanjana',
+        fullName: 'Lutho Hanjana',
+        email: 'luthohanjana125@gmail.com',
+        bio: 'I have a qualification in Opticianry that I obtained at the Cape Peninsula University of Capetown in the Faculty of Health Science. My aim is to empower the youth with knowledge that will shape their future.',
+        subjects: ['Life Sciences', 'English', 'Maths', 'Physical Sciences'],
+        hourlyRate: 200,
+        googleMeetUrl: 'https://meet.google.com/tgv-tccd-ges',
       },
     ];
     
@@ -474,9 +488,20 @@ export async function initializeDatabase(storage: DbStorage) {
       const created = await storage.createTutorProfile(tutor);
       // Auto-approve featured tutors
       await storage.approveTutor(created.id);
+      // Set password to be the same as email
+      await storage.setTutorPassword(created.id, tutor.email);
     }
     
     console.log('Featured tutors created successfully');
+  } else {
+    // Ensure all existing tutors have passwords set (email as password)
+    console.log('Checking tutor passwords...');
+    for (const tutor of existingTutors) {
+      if (!tutor.passwordHash) {
+        console.log(`Setting password for tutor: ${tutor.email}`);
+        await storage.setTutorPassword(tutor.id, tutor.email);
+      }
+    }
   }
   
   console.log('Database initialization complete');
