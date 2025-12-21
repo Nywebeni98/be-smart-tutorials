@@ -190,7 +190,7 @@ export function TutorsSection() {
         id: tutor.id,
         supabaseUserId: tutor.id,
         fullName: tutor.name,
-        email: `${tutor.id}@besmartonline.co.za`,
+        email: tutor.id === 'lutho-hanjana' ? 'Luthohanjana125@gmail.com' : `${tutor.id}@besmartonline.co.za`,
         phone: null,
         bio: tutor.bio,
         subjects: tutor.subjects,
