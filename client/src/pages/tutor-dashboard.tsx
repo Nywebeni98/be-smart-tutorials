@@ -135,8 +135,13 @@ export default function TutorDashboard() {
 
   const addAvailabilityMutation = useMutation({
     mutationFn: async (data: typeof availabilityForm) => {
+      const dateObj = new Date(data.date);
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const day = days[dateObj.getDay()];
+      
       return apiRequest('POST', '/api/availability', {
         tutorId: tutorProfile?.id,
+        day: day,
         date: data.date,
         startTime: data.startTime,
         endTime: data.endTime,

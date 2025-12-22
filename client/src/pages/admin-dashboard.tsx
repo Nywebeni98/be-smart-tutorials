@@ -91,6 +91,34 @@ export default function AdminDashboard() {
   // Filter booking notifications only
   const bookingNotifications = actionLogs.filter(log => log.actionType === 'booking_completed');
 
+  // Type for active tutor
+  interface ActiveTutor {
+    id: string;
+    fullName: string;
+    email: string;
+    phone?: string;
+    subjects: string[];
+    isApproved: boolean;
+    isBlocked: boolean;
+  }
+
+  // Fetch currently signed-in tutors
+  const { data: activeTutors = [], isLoading: loadingActiveTutors } = useQuery<ActiveTutor[]>({
+    queryKey: ['/api/admin/active-tutors'],
+    enabled: isAdmin,
+    refetchInterval: 30000, // Refetch every 30 seconds
+    queryFn: async () => {
+      const token = getAdminToken();
+      const response = await fetch('/api/admin/active-tutors', {
+        headers: {
+          ...(token ? { 'x-admin-token': token } : {}),
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch active tutors');
+      return response.json();
+    },
+  });
+
   // Mutation to send session reminders
   const sendRemindersMutation = useMutation({
     mutationFn: async () => {
@@ -760,6 +788,69 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="tutors" className="space-y-6">
+            {/* Active Tutors Section - Shows tutors currently signed in */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2" style={{ color: 'hsl(var(--brand-blue))' }}>
+                  <PlayCircle className="h-5 w-5" />
+                  Currently Signed In ({activeTutors.length})
+                </CardTitle>
+                <CardDescription>
+                  Tutors who are currently logged into the tutor dashboard
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingActiveTutors ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : activeTutors.length === 0 ? (
+                  <p className="text-center py-8 text-muted-foreground">No tutors currently signed in.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {activeTutors.map((tutor) => (
+                      <Card key={tutor.id} data-testid={`active-tutor-${tutor.id}`}>
+                        <CardContent className="pt-4">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{tutor.fullName}</p>
+                                <Badge variant="default" className="bg-green-500">Online</Badge>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Mail className="h-4 w-4" />
+                                {tutor.email}
+                              </div>
+                              {tutor.phone && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <Phone className="h-4 w-4" />
+                                  {tutor.phone}
+                                </div>
+                              )}
+                              {tutor.subjects && tutor.subjects.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {tutor.subjects.map((subject, i) => (
+                                    <Badge key={i} variant="secondary">{subject}</Badge>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {tutor.isApproved ? (
+                                <Badge variant="outline" className="text-green-600 border-green-600">Approved</Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-yellow-600 border-yellow-600">Pending</Badge>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {pendingTutors.length > 0 && (
               <Card>
                 <CardHeader>

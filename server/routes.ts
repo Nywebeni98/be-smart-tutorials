@@ -1623,6 +1623,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoint to get currently signed-in tutors
+  app.get("/api/admin/active-tutors", requireAdmin, async (req, res) => {
+    try {
+      // Use Set to deduplicate tutor IDs (a tutor may have multiple active sessions)
+      const activeTutorIds = [...new Set(Array.from(tutorSessions.values()))];
+      const allTutors = await storage.getAllTutorProfiles();
+      
+      const activeTutors = allTutors
+        .filter(tutor => activeTutorIds.includes(tutor.id))
+        .map(tutor => ({
+          id: tutor.id,
+          fullName: tutor.fullName,
+          email: tutor.email,
+          phone: tutor.phone,
+          subjects: tutor.subjects,
+          isApproved: tutor.isApproved,
+          isBlocked: tutor.isBlocked,
+        }));
+      
+      res.json(activeTutors);
+    } catch (error) {
+      console.error("Error fetching active tutors:", error);
+      res.status(500).json({ error: "Failed to fetch active tutors" });
+    }
+  });
+
   // Send reminder emails for upcoming sessions (called by scheduler or manually)
   app.post("/api/admin/send-reminders", requireAdmin, async (req, res) => {
     try {
