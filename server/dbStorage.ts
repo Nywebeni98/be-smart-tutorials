@@ -425,6 +425,10 @@ export async function initializeDatabase(storage: DbStorage) {
     await storage.createPaymentLink({ subject: 'CAT', hours: 1, amount: 200, url: 'https://pay.yoco.com/r/4GQxeA' });
     await storage.createPaymentLink({ subject: 'CAT', hours: 2, amount: 400, url: 'https://pay.yoco.com/r/25ZL1w' });
     
+    // Afrikaans (R250/hour - same as Physical Sciences pricing)
+    await storage.createPaymentLink({ subject: 'Afrikaans', hours: 1, amount: 250, url: 'https://pay.yoco.com/r/7vJexK' });
+    await storage.createPaymentLink({ subject: 'Afrikaans', hours: 2, amount: 500, url: 'https://pay.yoco.com/r/4kQVPZ' });
+    
     console.log('Payment links created successfully');
   }
   
@@ -481,6 +485,16 @@ export async function initializeDatabase(storage: DbStorage) {
         subjects: ['Life Sciences', 'English', 'Maths', 'Physical Sciences'],
         hourlyRate: 200,
         googleMeetUrl: 'https://meet.google.com/tgv-tccd-ges',
+      },
+      {
+        supabaseUserId: 'luthando-manisi',
+        fullName: 'Luthando Manisi',
+        email: 'luthandomanisi64@gmail.com',
+        bio: 'Ek is passievol oor Afrikaans en dit is my doel om hierdie pragtige taal met die jeug te deel! I am deeply passionate about teaching Afrikaans and helping students discover the beauty of this South African language. My unique teaching approach combines conversational practice with grammar fundamentals, making learning enjoyable and effective. "Afrikaans is nie net \'n taal nie, dit is \'n kultuur en \'n manier van lewe." Whether you\'re a beginner or looking to improve your fluency, I\'m here to guide you on your Afrikaans journey. Kom ons leer saam!',
+        subjects: ['Afrikaans'],
+        hourlyRate: 250,
+        googleMeetUrl: 'https://meet.google.com/vht-jkxn-hii',
+        photoUrl: '/attached_assets/WhatsApp_Image_2025-12-22_at_15.52.01_0c22999e_1766433068327.jpg',
       },
     ];
     

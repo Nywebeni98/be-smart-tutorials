@@ -24,19 +24,31 @@ Preferred communication style: Simple, everyday language.
 - **Trigger:** When a student completes a booking via `/api/booking-payments/complete`
 - **Note:** Using free Resend plan with onboarding@resend.dev sender
 
-### New Tutor: Lutho Hanjana
-- **Status:** Added to system (pending email verification)
-- **Qualification:** Opticianry from Cape Peninsula University of Technology
-- **Bio:** "I have a qualification in Opticianry that I obtained at the Cape Peninsula University of Capetown in the Faculty of Health Science. My aim is to empower the youth with knowledge that will shape their future"
-- **Subjects & Rates:**
-  - Life Sciences: R200/hour
-  - English: R200/hour
-  - Maths: R200/hour
-  - Physics: R250/hour
-- **Google Meet:** https://meet.google.com/tgv-tccd-ges
-- **Photo:** Uploaded (WhatsApp_Image_2025-12-19)
-- **Email:** TBA (placeholder: lutho.hanjana.pending@example.com)
-- **Availability:** 8 time slots created (M, W, F, Sat)
+### Registered Tutors
+All tutors use their email address as both username and password for login.
+
+1. **Siyanda Stekela** - siyandastekela@gmail.com
+   - Subjects: Maths, CAPS Curriculum, Cambridge Curriculum
+   - Rate: R200/hour
+
+2. **Siboniso Shandu** - sbo.bernard@gmail.com
+   - Subjects: Mathematics, Physical Sciences
+   - Rate: R200/hour
+
+3. **Thamsanqa Charles Ngonyama** - ngonyama08@gmail.com
+   - Subjects: English, History, CAT
+   - Rate: R200/hour
+
+4. **Lutho Hanjana** - luthohanjana125@gmail.com
+   - Subjects: Life Sciences, English, Maths, Physical Sciences
+   - Rate: R200/hour
+   - Qualification: Opticianry from Cape Peninsula University of Technology
+
+5. **Luthando Manisi** - luthandomanisi64@gmail.com
+   - Subjects: Afrikaans
+   - Rate: R250/hour
+   - Google Meet: https://meet.google.com/vht-jkxn-hii
+   - Bio: Passionate Afrikaans teacher with unique teaching approach
 
 ## System Architecture
 
