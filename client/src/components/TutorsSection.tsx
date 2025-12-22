@@ -11,6 +11,7 @@ import siyandaImage from '@assets/WhatsApp_Image_2025-12-01_at_22.46.26_1114b9ca
 import sibonisoImage from '@assets/WhatsApp_Image_2025-11-23_at_10.05.37_30c8290f_1764882512867.jpg';
 import thamsanqaImage from '@assets/WhatsApp_Image_2025-12-05_at_11.28.31_2db17684_1764958250135.jpg';
 import luthoImage from '@assets/WhatsApp_Image_2025-12-19_at_21.46.00_22d812e3_1766264032532.jpg';
+import luthandoImage from '@assets/WhatsApp_Image_2025-12-22_at_15.52.01_0c22999e_1766433068327.jpg';
 
 interface Tutor {
   id: string;
@@ -155,6 +156,36 @@ const tutors: Tutor[] = [
       },
     ],
   },
+  {
+    id: 'luthando-manisi',
+    name: 'Luthando Manisi',
+    title: 'Afrikaans Tutor',
+    image: luthandoImage,
+    subjects: ['Afrikaans'],
+    experience: 'Passionate Educator',
+    education: 'Afrikaans Language Specialist',
+    bio: 'Ek is passievol oor Afrikaans en dit is my doel om hierdie pragtige taal met die jeug te deel! I am deeply passionate about teaching Afrikaans and helping students discover the beauty of this South African language. My unique teaching approach combines conversational practice with grammar fundamentals, making learning enjoyable and effective. "Afrikaans is nie net \'n taal nie, dit is \'n kultuur en \'n manier van lewe." Whether you\'re a beginner or looking to improve your fluency, I\'m here to guide you on your Afrikaans journey. Kom ons leer saam!',
+    quote: 'Afrikaans is nie net \'n taal nie, dit is \'n kultuur en \'n manier van lewe.',
+    hourlyRate: 250,
+    googleMeetUrl: 'https://meet.google.com/vht-jkxn-hii',
+    highlights: [
+      {
+        icon: Heart,
+        title: 'Passionate About Afrikaans',
+        description: 'Deeply passionate about teaching Afrikaans and sharing the beauty of this South African language with students.',
+      },
+      {
+        icon: Lightbulb,
+        title: 'Unique Teaching Approach',
+        description: 'Combines conversational practice with grammar fundamentals, making learning enjoyable and effective.',
+      },
+      {
+        icon: Users,
+        title: 'All Levels Welcome',
+        description: 'Whether you\'re a beginner or looking to improve fluency, expert guidance on your Afrikaans journey awaits.',
+      },
+    ],
+  },
 ];
 
 export function TutorsSection() {
@@ -191,6 +222,7 @@ export function TutorsSection() {
         supabaseUserId: tutor.id,
         fullName: tutor.name,
         email: tutor.id === 'lutho-hanjana' ? 'Luthohanjana125@gmail.com' : `${tutor.id}@besmartonline.co.za`,
+        passwordHash: null,
         phone: null,
         bio: tutor.bio,
         subjects: tutor.subjects,
