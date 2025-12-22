@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, LogOut, Loader2, GraduationCap, Plus, Trash2 } from 'lucide-react';
+import { Calendar, Clock, LogOut, Loader2, GraduationCap, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import type { Availability, TutorProfile } from '@shared/schema';
 
 export default function TutorDashboard() {
@@ -16,6 +16,7 @@ export default function TutorDashboard() {
   const [tutorToken, setTutorToken] = useState<string | null>(null);
   const [tutorProfile, setTutorProfile] = useState<TutorProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   
   const [loginForm, setLoginForm] = useState({
     email: '',
@@ -205,15 +206,32 @@ export default function TutorDashboard() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={loginForm.password}
-                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                  required
-                  data-testid="input-tutor-password"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={loginForm.password}
+                    onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                    required
+                    className="pr-10"
+                    data-testid="input-tutor-password"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                    data-testid="button-toggle-password"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
               </div>
               <Button 
                 type="submit"
