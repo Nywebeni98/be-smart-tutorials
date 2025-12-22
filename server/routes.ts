@@ -1627,7 +1627,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/active-tutors", requireAdmin, async (req, res) => {
     try {
       // Use Set to deduplicate tutor IDs (a tutor may have multiple active sessions)
-      const activeTutorIds = [...new Set(Array.from(tutorSessions.values()))];
+      const activeTutorIds = Array.from(new Set(tutorSessions.values()));
       const allTutors = await storage.getAllTutorProfiles();
       
       const activeTutors = allTutors
