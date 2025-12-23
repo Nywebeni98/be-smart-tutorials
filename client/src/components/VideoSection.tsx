@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/card';
-import { Play } from 'lucide-react';
+import tutorialVideo from '@assets/Green_and_Black_Quote_Facebook_Post_1766523658079.mp4';
 
 export function VideoSection() {
   return (
@@ -22,21 +22,19 @@ export function VideoSection() {
         </div>
 
         <Card className="overflow-hidden border-2" style={{ borderColor: 'hsl(var(--brand-orange))' }}>
-          <div className="relative w-full bg-black rounded-lg overflow-hidden" style={{ paddingBottom: '56.25%' }}>
-            {/* Video placeholder with play button */}
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-black/50 to-black/70">
-              <div className="text-center space-y-4">
-                <div 
-                  className="w-20 h-20 rounded-full flex items-center justify-center mx-auto cursor-pointer hover-elevate transition-all"
-                  style={{ backgroundColor: 'hsl(var(--brand-orange))' }}
-                  data-testid="button-play-video"
-                >
-                  <Play className="w-8 h-8 text-white fill-white" />
-                </div>
-                <p className="text-white text-lg">Your Tutoring Video</p>
-                <p className="text-white/70 text-sm">Add your video URL or upload from YouTube</p>
-              </div>
-            </div>
+          <div className="relative w-full bg-black rounded-lg overflow-hidden">
+            <video 
+              className="w-full h-auto"
+              controls
+              autoPlay
+              muted
+              loop
+              playsInline
+              data-testid="video-tutorial"
+            >
+              <source src={tutorialVideo} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
           </div>
         </Card>
 
