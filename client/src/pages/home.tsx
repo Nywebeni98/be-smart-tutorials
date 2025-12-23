@@ -5,7 +5,6 @@ import { SubjectsSection } from '@/components/SubjectsSection';
 import { AboutSection } from '@/components/AboutSection';
 import { TutorsSection } from '@/components/TutorsSection';
 import { VideoSection } from '@/components/VideoSection';
-import { AppointmentSection } from '@/components/AppointmentSection';
 import { ContactSection } from '@/components/ContactSection';
 import { Footer } from '@/components/Footer';
 
@@ -31,9 +30,6 @@ export default function Home() {
         
         {/* Video testimonials and benefits */}
         <VideoSection />
-        
-        {/* Book an appointment */}
-        <AppointmentSection />
         
         {/* Contact form and information */}
         <ContactSection />
