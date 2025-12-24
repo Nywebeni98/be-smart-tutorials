@@ -5,6 +5,15 @@ export function VideoSection() {
   return (
     <section className="py-16 lg:py-24 bg-background">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-8">
+          <h2 
+            className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold"
+            style={{ color: 'hsl(var(--brand-blue))' }}
+            data-testid="heading-video-section"
+          >
+            BE SMART<br />ONLINE TUTORIALS
+          </h2>
+        </div>
 
         <Card className="overflow-hidden border-2" style={{ borderColor: 'hsl(var(--brand-orange))' }}>
           <div className="relative w-full bg-black rounded-lg overflow-hidden">
