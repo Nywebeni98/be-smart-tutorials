@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { Loader2, CreditCard, Calendar, Clock, User, BookOpen, Mail } from 'lucide-react';
+import { Loader2, CreditCard, Calendar, Clock, User, BookOpen, Mail, LogIn } from 'lucide-react';
 import type { TutorProfile, Availability, PaymentLink } from '@shared/schema';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -18,11 +19,20 @@ interface BookingModalProps {
 
 export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
   const { toast } = useToast();
+  const { user, signInWithGoogle, loading: authLoading } = useAuth();
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [hours, setHours] = useState<string>('1');
   const [subject, setSubject] = useState<string>('');
   const [studentName, setStudentName] = useState<string>('');
   const [studentEmail, setStudentEmail] = useState<string>('');
+
+  // Pre-fill student info from logged in user
+  useEffect(() => {
+    if (user && isOpen) {
+      setStudentName(user.user_metadata?.full_name || user.user_metadata?.name || '');
+      setStudentEmail(user.email || '');
+    }
+  }, [user, isOpen]);
 
   // Fetch payment links from database
   const { data: paymentLinks = [] } = useQuery<PaymentLink[]>({
@@ -215,6 +225,48 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
   const currentPaymentInfo = subject ? paymentLinksMap[subject]?.[hours] : null;
   const totalAmount = currentPaymentInfo?.amount || 0;
 
+  // Show sign-in prompt if user is not logged in
+  if (!user && !authLoading) {
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LogIn className="h-5 w-5" />
+              Sign In Required
+            </DialogTitle>
+            <DialogDescription>
+              Please sign in with your Google account to book a session with {tutor.fullName}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="text-center">
+              <p className="text-muted-foreground mb-4">
+                Signing in helps us keep track of your bookings and send you session reminders.
+              </p>
+              <Button
+                onClick={signInWithGoogle}
+                className="w-full"
+                style={{ backgroundColor: 'hsl(var(--brand-blue))' }}
+                data-testid="button-signin-to-book"
+              >
+                <LogIn className="h-4 w-4 mr-2" />
+                Sign In with Google
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={handleClose} data-testid="button-cancel-signin">
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-lg">
@@ -224,7 +276,7 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
             Book a Session with {tutor.fullName}
           </DialogTitle>
           <DialogDescription>
-            Enter your details, select your subject and time slot, then proceed to payment.
+            Select your subject and time slot, then proceed to payment.
           </DialogDescription>
         </DialogHeader>
 
