@@ -8,10 +8,10 @@ export function VideoSection() {
         <div className="text-center mb-8">
           <h2 
             className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold"
-            style={{ color: 'hsl(var(--brand-blue))' }}
             data-testid="heading-video-section"
           >
-            BE SMART<br />ONLINE TUTORIALS
+            <span style={{ color: 'hsl(var(--brand-blue))' }}>BE SMART</span>{' '}
+            <span style={{ color: 'hsl(var(--brand-orange))' }}>ONLINE TUTORIALS</span>
           </h2>
         </div>
 
