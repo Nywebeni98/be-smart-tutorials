@@ -253,6 +253,23 @@ export function TutorsSection() {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto" data-testid="text-tutors-subtitle">
             Our dedicated team of qualified educators are passionate about helping students achieve their academic goals.
           </p>
+          
+          {/* Payment Instructions Banner */}
+          <div 
+            className="mt-8 mx-auto max-w-2xl p-6 rounded-xl border-4 border-orange-400"
+            style={{ backgroundColor: 'hsl(var(--brand-orange) / 0.15)' }}
+            data-testid="payment-instructions-banner"
+          >
+            <p className="text-xl sm:text-2xl font-bold text-orange-600 dark:text-orange-400">
+              AFTER PAYMENT, PLEASE SHARE YOUR PROOF OF PAYMENT TO:
+            </p>
+            <p className="text-2xl sm:text-3xl font-bold text-orange-700 dark:text-orange-300 mt-2">
+              onlinepresenceimpact@gmail.com
+            </p>
+            <p className="text-lg sm:text-xl font-semibold text-orange-600 dark:text-orange-400 mt-3">
+              A Google Meet link will be shared with you.
+            </p>
+          </div>
         </div>
 
         <div className="space-y-12">
