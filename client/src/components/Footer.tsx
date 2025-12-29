@@ -71,12 +71,12 @@ export function Footer() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={social.label}
-                    className="w-10 h-10 rounded-full flex items-center justify-center hover-elevate active-elevate-2 transition-all"
+                    className="w-10 h-10 rounded-full flex items-center justify-center transition-all group"
                     style={{ backgroundColor: 'hsl(var(--brand-blue) / 0.1)' }}
                     data-testid={`link-social-${social.label.toLowerCase()}`}
                   >
                     <Icon 
-                      className="w-5 h-5" 
+                      className="w-5 h-5 transition-colors group-hover:text-orange-500" 
                       style={{ color: 'hsl(var(--brand-blue))' }}
                     />
                   </a>

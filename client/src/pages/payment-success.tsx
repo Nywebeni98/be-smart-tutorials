@@ -169,6 +169,17 @@ export default function PaymentSuccess() {
                 Important: Your Google Meet Link
               </AlertDialogTitle>
               <AlertDialogDescription className="text-center space-y-3">
+                <div className="bg-orange-100 dark:bg-orange-950/50 p-4 rounded-lg border-2 border-orange-400 dark:border-orange-600">
+                  <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                    PLEASE SHARE YOUR PROOF OF PAYMENT TO:
+                  </p>
+                  <p className="text-xl font-bold text-orange-700 dark:text-orange-300 mt-1">
+                    onlinepresenceimpact@gmail.com
+                  </p>
+                  <p className="text-base font-semibold text-orange-600 dark:text-orange-400 mt-2">
+                    A Google Meet link will be shared with you.
+                  </p>
+                </div>
                 <p>
                   You will use this Google Meet link to join your tutoring session at the scheduled time.
                 </p>
