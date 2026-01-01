@@ -12,6 +12,7 @@ import sibonisoImage from '@assets/WhatsApp_Image_2025-11-23_at_10.05.37_30c8290
 import thamsanqaImage from '@assets/WhatsApp_Image_2025-12-05_at_11.28.31_2db17684_1764958250135.jpg';
 import luthoImage from '@assets/WhatsApp_Image_2025-12-19_at_21.46.00_22d812e3_1766264032532.jpg';
 import luthandoImage from '@assets/WhatsApp_Image_2025-12-22_at_15.52.01_0c22999e_1766433068327.jpg';
+import milisaImage from '@assets/WhatsApp_Image_2026-01-01_at_19.45.33_bdba9873_1767290090886.jpg';
 
 interface Tutor {
   id: string;
@@ -183,6 +184,36 @@ const tutors: Tutor[] = [
         icon: Users,
         title: 'All Levels Welcome',
         description: 'Whether you\'re a beginner or looking to improve fluency, expert guidance on your Afrikaans journey awaits.',
+      },
+    ],
+  },
+  {
+    id: 'milisa-matshintsana',
+    name: 'Milisa Matshintsana',
+    title: 'Geography Tutor',
+    image: milisaImage,
+    subjects: ['Geography'],
+    experience: 'Passionate Educator',
+    education: 'Geography Specialist',
+    bio: 'I am Milisa Matshintsana, a passionate Geography educator dedicated to helping learners understand the world around them. I enjoy making Geography engaging and easy to understand by breaking down complex concepts and encouraging critical thinking about environmental and human interactions. My goal is to help learners build strong geographical skills and apply what they learn to real-life situations.',
+    quote: 'Understanding Geography helps us understand our place in the world and how we interact with our environment.',
+    hourlyRate: 200,
+    googleMeetUrl: 'https://meet.google.com/dqs-iwcz-hxt',
+    highlights: [
+      {
+        icon: Target,
+        title: 'Concept Breakdown',
+        description: 'Breaking down complex geographical concepts into simple, easy-to-understand explanations for all learners.',
+      },
+      {
+        icon: Lightbulb,
+        title: 'Critical Thinking',
+        description: 'Encouraging critical thinking about environmental and human interactions in the world around us.',
+      },
+      {
+        icon: BookOpen,
+        title: 'Real-World Application',
+        description: 'Helping learners build strong geographical skills and apply what they learn to real-life situations.',
       },
     ],
   },
