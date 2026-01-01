@@ -212,6 +212,7 @@ export default function PaymentSuccess() {
                 data-testid="button-understand-dialog"
                 onClick={() => {
                   setShowMeetingAlert(false);
+                  sessionStorage.removeItem('pendingBooking'); // Clear session
                   setLocation('/');
                 }}
               >
@@ -337,7 +338,10 @@ export default function PaymentSuccess() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => setLocation('/')}
+                onClick={() => {
+                  sessionStorage.removeItem('pendingBooking'); // Clear session
+                  setLocation('/');
+                }}
                 data-testid="button-back-home"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />

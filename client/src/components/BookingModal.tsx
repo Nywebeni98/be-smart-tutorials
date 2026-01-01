@@ -94,6 +94,9 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
       if (lower.includes('life science')) {
         if (!supportedSubjects.includes('Life Sciences')) supportedSubjects.push('Life Sciences');
       }
+      if (lower.includes('geography')) {
+        if (!supportedSubjects.includes('Geography')) supportedSubjects.push('Geography');
+      }
       if (lower.includes('afrikaans')) {
         if (!supportedSubjects.includes('Afrikaans')) supportedSubjects.push('Afrikaans');
       }
