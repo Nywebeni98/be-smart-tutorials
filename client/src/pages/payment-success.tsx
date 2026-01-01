@@ -57,6 +57,15 @@ export default function PaymentSuccess() {
     }
   }, []);
 
+  // Aggressively clear session data when leaving this page
+  useEffect(() => {
+    return () => {
+      if (bookingComplete) {
+        sessionStorage.clear();
+      }
+    };
+  }, [bookingComplete]);
+
   const createBookingMutation = useMutation({
     mutationFn: async (data: {
       bookingToken: string;

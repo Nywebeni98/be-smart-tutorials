@@ -29,7 +29,8 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
   // Clear session storage on open to prevent stale payment success data
   useEffect(() => {
     if (isOpen) {
-      sessionStorage.removeItem('pendingBooking');
+      sessionStorage.clear();
+      window.localStorage.removeItem('pendingBooking'); // Also clear localStorage just in case
     }
   }, [isOpen]);
 
