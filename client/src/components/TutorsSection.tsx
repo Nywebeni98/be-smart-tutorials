@@ -300,6 +300,9 @@ export function TutorsSection() {
             <p className="text-lg sm:text-xl font-semibold text-orange-600 dark:text-orange-400 mt-3">
               A Google Meet link will be shared with you.
             </p>
+            <p className="text-base sm:text-lg font-medium text-orange-600 dark:text-orange-400 mt-3">
+              Please include the <span className="font-bold">TUTOR NAME</span> and <span className="font-bold">SUBJECT</span> you are booking in your email.
+            </p>
           </div>
         </div>
 
