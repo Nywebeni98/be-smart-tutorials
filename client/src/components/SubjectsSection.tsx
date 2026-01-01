@@ -5,7 +5,8 @@ import {
   Beaker, 
   BookOpen, 
   Languages, 
-  Brain
+  Brain,
+  Globe
 } from 'lucide-react';
 
 export function SubjectsSection() {
@@ -58,6 +59,14 @@ export function SubjectsSection() {
       icon: Brain,
       color: 'hsl(var(--brand-blue))',
       bgColor: 'hsl(var(--brand-blue) / 0.2)',
+    },
+    {
+      id: 8,
+      title: 'Geography',
+      description: 'Understand our world through the study of physical landscapes, human interactions, and environmental systems.',
+      icon: Globe,
+      color: 'hsl(var(--brand-yellow))',
+      bgColor: 'hsl(var(--brand-yellow) / 0.2)',
     },
   ];
 
