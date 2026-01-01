@@ -26,6 +26,13 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
   const [studentName, setStudentName] = useState<string>('');
   const [studentEmail, setStudentEmail] = useState<string>('');
 
+  // Clear session storage on open to prevent stale payment success data
+  useEffect(() => {
+    if (isOpen) {
+      sessionStorage.removeItem('pendingBooking');
+    }
+  }, [isOpen]);
+
   // Pre-fill student info from logged in user
   useEffect(() => {
     if (user && isOpen) {
