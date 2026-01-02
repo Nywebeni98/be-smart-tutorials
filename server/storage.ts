@@ -1,4 +1,4 @@
-import { type ContactSubmission, type InsertContactSubmission, type Appointment, type InsertAppointment, type Availability, type InsertAvailability, type TutorProfile, type InsertTutorProfile, type Pricing, type InsertPricing, type BookingPayment, type InsertBookingPayment, type PaymentLink, type InsertPaymentLink, type ActionLog, type InsertActionLog, type AdminSettings, type InsertAdminSettings } from "@shared/schema";
+import { type ContactSubmission, type InsertContactSubmission, type Appointment, type InsertAppointment, type Availability, type InsertAvailability, type TutorProfile, type InsertTutorProfile, type Pricing, type InsertPricing, type BookingPayment, type InsertBookingPayment, type PaymentLink, type InsertPaymentLink, type ActionLog, type InsertActionLog, type AdminSettings, type InsertAdminSettings, type ChatMessage, type InsertChatMessage, type ChatConversation, type InsertChatConversation } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 // Storage interface with CRUD methods
@@ -62,6 +62,19 @@ export interface IStorage {
   createActionLog(log: InsertActionLog): Promise<ActionLog>;
   getAllActionLogs(): Promise<ActionLog[]>;
   getRecentActionLogs(limit?: number): Promise<ActionLog[]>;
+  
+  // Chat message methods
+  createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  getChatMessagesByConversation(conversationId: string): Promise<ChatMessage[]>;
+  markMessagesAsRead(conversationId: string, receiverEmail: string): Promise<void>;
+  getUnreadMessageCount(email: string): Promise<number>;
+  
+  // Chat conversation methods
+  createChatConversation(conversation: InsertChatConversation): Promise<ChatConversation>;
+  getChatConversation(id: string): Promise<ChatConversation | undefined>;
+  getOrCreateConversation(studentEmail: string, studentName: string, tutorId: string, tutorEmail: string, tutorName: string): Promise<ChatConversation>;
+  getConversationsByStudentEmail(email: string): Promise<ChatConversation[]>;
+  getConversationsByTutorId(tutorId: string): Promise<ChatConversation[]>;
 }
 
 // In-memory storage implementation

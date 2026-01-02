@@ -2,6 +2,7 @@ import { db } from './db';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
+import { desc } from 'drizzle-orm';
 import {
   contactSubmissions,
   appointments,
@@ -12,6 +13,8 @@ import {
   paymentLinks,
   adminSettings,
   actionLogs,
+  chatMessages,
+  chatConversations,
   type ContactSubmission,
   type InsertContactSubmission,
   type Appointment,
@@ -30,6 +33,10 @@ import {
   type InsertAdminSettings,
   type ActionLog,
   type InsertActionLog,
+  type ChatMessage,
+  type InsertChatMessage,
+  type ChatConversation,
+  type InsertChatConversation,
 } from '@shared/schema';
 import type { IStorage } from './storage';
 
@@ -393,6 +400,89 @@ export class DbStorage implements IStorage {
   async getRecentActionLogs(limit: number = 50): Promise<ActionLog[]> {
     const logs = await db.select().from(actionLogs).orderBy(actionLogs.createdAt);
     return logs.slice(-limit).reverse();
+  }
+
+  // Chat message methods
+  async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    const [result] = await db.insert(chatMessages).values({
+      id: randomUUID(),
+      ...message,
+      isRead: false,
+    }).returning();
+    
+    // Update the conversation's lastMessageAt
+    await db.update(chatConversations)
+      .set({ lastMessageAt: new Date() })
+      .where(eq(chatConversations.id, message.conversationId));
+    
+    return result;
+  }
+
+  async getChatMessagesByConversation(conversationId: string): Promise<ChatMessage[]> {
+    return await db.select().from(chatMessages)
+      .where(eq(chatMessages.conversationId, conversationId))
+      .orderBy(chatMessages.createdAt);
+  }
+
+  async markMessagesAsRead(conversationId: string, receiverEmail: string): Promise<void> {
+    await db.update(chatMessages)
+      .set({ isRead: true })
+      .where(eq(chatMessages.conversationId, conversationId));
+  }
+
+  async getUnreadMessageCount(email: string): Promise<number> {
+    const messages = await db.select().from(chatMessages)
+      .where(eq(chatMessages.receiverEmail, email));
+    return messages.filter(m => !m.isRead).length;
+  }
+
+  // Chat conversation methods
+  async createChatConversation(conversation: InsertChatConversation): Promise<ChatConversation> {
+    const [result] = await db.insert(chatConversations).values({
+      id: randomUUID(),
+      ...conversation,
+      lastMessageAt: new Date(),
+    }).returning();
+    return result;
+  }
+
+  async getChatConversation(id: string): Promise<ChatConversation | undefined> {
+    const [result] = await db.select().from(chatConversations)
+      .where(eq(chatConversations.id, id));
+    return result;
+  }
+
+  async getOrCreateConversation(studentEmail: string, studentName: string, tutorId: string, tutorEmail: string, tutorName: string): Promise<ChatConversation> {
+    // Try to find existing conversation
+    const allConversations = await db.select().from(chatConversations);
+    const existing = allConversations.find(
+      c => c.studentEmail === studentEmail && c.tutorId === tutorId
+    );
+    
+    if (existing) {
+      return existing;
+    }
+    
+    // Create new conversation
+    return this.createChatConversation({
+      studentEmail,
+      studentName,
+      tutorId,
+      tutorEmail,
+      tutorName,
+    });
+  }
+
+  async getConversationsByStudentEmail(email: string): Promise<ChatConversation[]> {
+    return await db.select().from(chatConversations)
+      .where(eq(chatConversations.studentEmail, email))
+      .orderBy(desc(chatConversations.lastMessageAt));
+  }
+
+  async getConversationsByTutorId(tutorId: string): Promise<ChatConversation[]> {
+    return await db.select().from(chatConversations)
+      .where(eq(chatConversations.tutorId, tutorId))
+      .orderBy(desc(chatConversations.lastMessageAt));
   }
 }
 

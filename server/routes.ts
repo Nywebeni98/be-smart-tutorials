@@ -1,9 +1,10 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { dbStorage, initializeDatabase } from "./dbStorage";
-import { insertContactSchema, insertAppointmentSchema, insertAvailabilitySchema, insertTutorProfileSchema, insertBookingPaymentSchema, passwordSchema } from "@shared/schema";
+import { insertContactSchema, insertAppointmentSchema, insertAvailabilitySchema, insertTutorProfileSchema, insertBookingPaymentSchema, passwordSchema, insertChatMessageSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { Resend } from 'resend';
+import { setupWebSocketServer } from './websocket';
 
 // Use database storage
 const storage = dbStorage;
@@ -1842,7 +1843,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== CHAT API ENDPOINTS ====================
+
+  // Get or create a conversation between a student and tutor
+  app.post("/api/chat/conversations", async (req, res) => {
+    try {
+      const { studentEmail, studentName, tutorId, tutorEmail, tutorName } = req.body;
+      
+      if (!studentEmail || !studentName || !tutorId || !tutorEmail || !tutorName) {
+        return res.status(400).json({
+          success: false,
+          message: "Missing required fields",
+        });
+      }
+      
+      const conversation = await storage.getOrCreateConversation(
+        studentEmail, studentName, tutorId, tutorEmail, tutorName
+      );
+      res.json(conversation);
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
+  // Get conversations for a student
+  app.get("/api/chat/conversations/student/:email", async (req, res) => {
+    try {
+      const { email } = req.params;
+      const conversations = await storage.getConversationsByStudentEmail(email);
+      res.json(conversations);
+    } catch (error) {
+      console.error("Error fetching student conversations:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
+  // Get conversations for a tutor
+  app.get("/api/chat/conversations/tutor/:tutorId", async (req, res) => {
+    try {
+      const { tutorId } = req.params;
+      const conversations = await storage.getConversationsByTutorId(tutorId);
+      res.json(conversations);
+    } catch (error) {
+      console.error("Error fetching tutor conversations:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
+  // Get messages for a conversation
+  app.get("/api/chat/messages/:conversationId", async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      const messages = await storage.getChatMessagesByConversation(conversationId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
+  // Send a message (HTTP fallback if WebSocket is not available)
+  app.post("/api/chat/messages", async (req, res) => {
+    try {
+      const result = insertChatMessageSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          message: fromZodError(result.error).message,
+        });
+      }
+      
+      const message = await storage.createChatMessage(result.data);
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
+  // Mark messages as read
+  app.post("/api/chat/messages/:conversationId/read", async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      const { receiverEmail } = req.body;
+      
+      if (!receiverEmail) {
+        return res.status(400).json({
+          success: false,
+          message: "Missing receiverEmail",
+        });
+      }
+      
+      await storage.markMessagesAsRead(conversationId, receiverEmail);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
+  // Get unread message count for a user
+  app.get("/api/chat/unread/:email", async (req, res) => {
+    try {
+      const { email } = req.params;
+      const count = await storage.getUnreadMessageCount(email);
+      res.json({ unreadCount: count });
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
   const httpServer = createServer(app);
+
+  // Setup WebSocket server for real-time chat
+  setupWebSocketServer(httpServer);
 
   return httpServer;
 }
