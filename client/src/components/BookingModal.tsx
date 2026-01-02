@@ -65,29 +65,15 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
   // Filter to show only slots for this tutor that are not booked
   const availableSlots = allAvailabilities.filter(slot => slot.tutorId === tutor?.id && !slot.isBooked);
 
-  // Debug log when modal is open
-  useEffect(() => {
-    if (isOpen && tutor) {
-      console.log('[BookingModal OPEN] tutor:', tutor.fullName);
-      console.log('[BookingModal OPEN] subjects raw:', tutor.subjects);
-      console.log('[BookingModal OPEN] subjects JSON:', JSON.stringify(tutor.subjects));
-      console.log('[BookingModal OPEN] type:', typeof tutor.subjects);
-      console.log('[BookingModal OPEN] isArray:', Array.isArray(tutor.subjects));
-      console.log('[BookingModal OPEN] subjectOptions:', getSubjectOptions());
-    }
-  }, [isOpen, tutor]);
-
-  // Get subject options based on what the tutor actually teaches
-  // Map tutor subjects to our supported payment subjects
-  const getSubjectOptions = () => {
+  // Memoize subject options to ensure stable reference for Radix Select
+  // This fixes the issue where the dropdown opens before options are ready
+  const subjectOptions = useMemo(() => {
     if (!tutor) {
-      // Modal not yet opened with a tutor - this is expected
       return [];
     }
     
     if (!tutor.subjects) {
-      console.log('[getSubjectOptions] No subjects found for tutor:', tutor.fullName);
-      console.log('[getSubjectOptions] Full tutor object:', JSON.stringify(tutor, null, 2));
+      console.log('[subjectOptions] No subjects found for tutor:', tutor.fullName);
       return [];
     }
     
@@ -96,23 +82,18 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
     if (Array.isArray(tutor.subjects)) {
       subjectsArray = tutor.subjects;
     } else if (typeof tutor.subjects === 'string') {
-      // Handle comma-separated string
       subjectsArray = (tutor.subjects as string).split(',').map(s => s.trim());
     } else {
       subjectsArray = [String(tutor.subjects)];
     }
     
-    console.log('[getSubjectOptions] Processing subjects:', subjectsArray);
+    console.log('[subjectOptions] Processing subjects for', tutor.fullName, ':', subjectsArray);
     
     const supportedSubjects: string[] = [];
     
     subjectsArray.forEach(s => {
-      if (!s || typeof s !== 'string') {
-        console.log('[getSubjectOptions] Skipping invalid subject:', s);
-        return;
-      }
+      if (!s || typeof s !== 'string') return;
       const lower = s.toLowerCase().trim();
-      console.log('[getSubjectOptions] Checking subject:', lower);
       
       if (lower.includes('maths') || lower.includes('mathematics')) {
         if (!supportedSubjects.includes('Maths')) supportedSubjects.push('Maths');
@@ -143,11 +124,16 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
       }
     });
     
-    console.log('[getSubjectOptions] Supported subjects:', supportedSubjects);
+    console.log('[subjectOptions] Final options:', supportedSubjects);
     return supportedSubjects;
-  };
-  
-  const subjectOptions = getSubjectOptions();
+  }, [tutor?.id, tutor?.subjects, tutor?.fullName]);
+
+  // Debug log when modal opens
+  useEffect(() => {
+    if (isOpen && tutor) {
+      console.log('[BookingModal] Opened for:', tutor.fullName, 'with subjects:', subjectOptions);
+    }
+  }, [isOpen, tutor, subjectOptions]);
 
   // Mutation to create Yoco checkout session (generates fresh payment URL every time)
   const createCheckoutMutation = useMutation({
