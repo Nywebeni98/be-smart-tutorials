@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Loader2, CreditCard, Calendar, Clock, User, BookOpen, Mail, LogIn } from 'lucide-react';
-import type { TutorProfile, Availability, PaymentLink } from '@shared/schema';
+import type { TutorProfile, Availability } from '@shared/schema';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface BookingModalProps {
@@ -42,26 +42,19 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
     }
   }, [user, isOpen]);
 
-  // Fetch payment links from database
-  const { data: paymentLinks = [] } = useQuery<PaymentLink[]>({
-    queryKey: ['/api/payment-links'],
-    enabled: isOpen,
-  });
-
-  // Build payment links lookup map from database data
-  const paymentLinksMap = useMemo(() => {
-    const map: Record<string, Record<string, { amount: number; url: string }>> = {};
-    paymentLinks.forEach(link => {
-      if (!map[link.subject]) {
-        map[link.subject] = {};
-      }
-      map[link.subject][link.hours.toString()] = {
-        amount: link.amount,
-        url: link.url,
-      };
-    });
-    return map;
-  }, [paymentLinks]);
+  // Fixed pricing - no longer depends on payment_links table
+  // Maths, English, History, CAT, Life Sciences, Geography = R200/hr
+  // Physical Sciences, Afrikaans = R250/hr
+  const FIXED_PRICING: Record<string, number> = {
+    'Maths': 200,
+    'English': 200,
+    'History': 200,
+    'CAT': 200,
+    'Life Sciences': 200,
+    'Geography': 200,
+    'Physical Sciences': 250,
+    'Afrikaans': 250,
+  };
 
   // Fetch ALL available time slots from all tutors
   const { data: allAvailabilities = [], isLoading: loadingSlots } = useQuery<Availability[]>({
@@ -187,16 +180,18 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
       return;
     }
 
-    // Get the payment amount for selected subject and hours from database
-    const paymentInfo = paymentLinksMap[subject]?.[hours];
-    if (!paymentInfo) {
+    // Get the payment amount from fixed pricing
+    const hourlyRate = FIXED_PRICING[subject];
+    if (!hourlyRate) {
       toast({
         title: 'Invalid Selection',
-        description: 'Please select a valid subject and duration.',
+        description: 'Please select a valid subject.',
         variant: 'destructive',
       });
       return;
     }
+
+    const totalAmount = hourlyRate * parseInt(hours);
 
     // Create a fresh Yoco checkout session (new payment URL every time!)
     createCheckoutMutation.mutate({
@@ -205,7 +200,7 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
       availabilityId: selectedSlot || '',
       subject,
       hours: parseInt(hours),
-      amount: paymentInfo.amount,
+      amount: totalAmount,
       studentName: studentName.trim(),
       studentEmail: studentEmail.trim(),
     });
@@ -227,8 +222,8 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
   if (!tutor) return null;
 
   const hoursNum = parseInt(hours) || 1;
-  const currentPaymentInfo = subject ? paymentLinksMap[subject]?.[hours] : null;
-  const totalAmount = currentPaymentInfo?.amount || 0;
+  const hourlyRate = subject ? FIXED_PRICING[subject] : 0;
+  const displayAmount = hourlyRate * hoursNum;
 
   // Show sign-in prompt if user is not logged in
   if (!user && !authLoading) {
@@ -403,7 +398,7 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
               </div>
               <div className="border-t pt-2 flex items-center justify-between font-semibold">
                 <span>Total:</span>
-                <span className="text-lg" data-testid="text-booking-total">R{totalAmount}</span>
+                <span className="text-lg" data-testid="text-booking-total">R{displayAmount}</span>
               </div>
             </div>
           )}
@@ -424,7 +419,7 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
             ) : (
               <>
                 <CreditCard className="mr-2 h-4 w-4" />
-                Pay R{totalAmount} Now
+                Pay R{displayAmount} Now
               </>
             )}
           </Button>
