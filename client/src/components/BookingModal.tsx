@@ -65,19 +65,49 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
   // Filter to show only slots for this tutor that are not booked
   const availableSlots = allAvailabilities.filter(slot => slot.tutorId === tutor?.id && !slot.isBooked);
 
+  // Debug log when modal is open
+  useEffect(() => {
+    if (isOpen && tutor) {
+      console.log('[BookingModal OPEN] tutor:', tutor.fullName);
+      console.log('[BookingModal OPEN] subjects raw:', tutor.subjects);
+      console.log('[BookingModal OPEN] subjects JSON:', JSON.stringify(tutor.subjects));
+      console.log('[BookingModal OPEN] type:', typeof tutor.subjects);
+      console.log('[BookingModal OPEN] isArray:', Array.isArray(tutor.subjects));
+      console.log('[BookingModal OPEN] subjectOptions:', getSubjectOptions());
+    }
+  }, [isOpen, tutor]);
+
   // Get subject options based on what the tutor actually teaches
   // Map tutor subjects to our supported payment subjects
   const getSubjectOptions = () => {
-    console.log('[BookingModal] tutor:', tutor?.fullName, 'subjects:', tutor?.subjects, 'type:', typeof tutor?.subjects, 'isArray:', Array.isArray(tutor?.subjects));
-    if (!tutor?.subjects) return [];
+    if (!tutor?.subjects) {
+      console.log('[getSubjectOptions] No subjects found for tutor');
+      return [];
+    }
     
     // Handle case where subjects might be a string instead of array
-    const subjectsArray = Array.isArray(tutor.subjects) ? tutor.subjects : [tutor.subjects];
+    let subjectsArray: string[];
+    if (Array.isArray(tutor.subjects)) {
+      subjectsArray = tutor.subjects;
+    } else if (typeof tutor.subjects === 'string') {
+      // Handle comma-separated string
+      subjectsArray = (tutor.subjects as string).split(',').map(s => s.trim());
+    } else {
+      subjectsArray = [String(tutor.subjects)];
+    }
+    
+    console.log('[getSubjectOptions] Processing subjects:', subjectsArray);
     
     const supportedSubjects: string[] = [];
     
     subjectsArray.forEach(s => {
-      const lower = s.toLowerCase();
+      if (!s || typeof s !== 'string') {
+        console.log('[getSubjectOptions] Skipping invalid subject:', s);
+        return;
+      }
+      const lower = s.toLowerCase().trim();
+      console.log('[getSubjectOptions] Checking subject:', lower);
+      
       if (lower.includes('maths') || lower.includes('mathematics')) {
         if (!supportedSubjects.includes('Maths')) supportedSubjects.push('Maths');
       }
@@ -107,6 +137,7 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
       }
     });
     
+    console.log('[getSubjectOptions] Supported subjects:', supportedSubjects);
     return supportedSubjects;
   };
   
