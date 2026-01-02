@@ -361,15 +361,19 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
                 <SelectTrigger id="subject" data-testid="select-booking-subject">
                   <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
-                <SelectContent>
-                  {subjectOptions.map((subj) => (
-                    <SelectItem key={subj} value={subj}>
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="h-4 w-4" />
-                        {subj}
-                      </div>
-                    </SelectItem>
-                  ))}
+                <SelectContent className="z-[100]">
+                  {subjectOptions.length === 0 ? (
+                    <div className="py-2 px-3 text-muted-foreground text-sm">No subjects available</div>
+                  ) : (
+                    subjectOptions.map((subj) => (
+                      <SelectItem key={subj} value={subj}>
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="h-4 w-4" />
+                          {subj}
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
