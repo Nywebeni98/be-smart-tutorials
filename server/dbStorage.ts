@@ -590,16 +590,6 @@ export async function initializeDatabase(storage: DbStorage) {
         googleMeetUrl: 'https://meet.google.com/vht-jkxn-hii',
         photoUrl: '/attached_assets/WhatsApp_Image_2025-12-22_at_15.52.01_0c22999e_1766433068327.jpg',
       },
-      {
-        supabaseUserId: 'milisa-matshintsana',
-        fullName: 'Milisa Matshintsana',
-        email: 'mantshintshanamilisa@gmail.com',
-        bio: 'I am Milisa Matshintsana, a passionate Geography educator dedicated to helping learners understand the world around them. I enjoy making Geography engaging and easy to understand by breaking down complex concepts and encouraging critical thinking about environmental and human interactions. My goal is to help learners build strong geographical skills and apply what they learn to real-life situations.',
-        subjects: ['Geography'],
-        hourlyRate: 200,
-        googleMeetUrl: 'https://meet.google.com/dqs-iwcz-hxt',
-        photoUrl: '/attached_assets/WhatsApp_Image_2026-01-01_at_19.45.33_bdba9873_1767290090886.jpg',
-      },
     ];
     
     for (const tutor of featuredTutors) {
