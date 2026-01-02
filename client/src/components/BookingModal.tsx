@@ -357,21 +357,27 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="subject">Subject</Label>
-              <Select value={subject} onValueChange={setSubject}>
-                <SelectTrigger id="subject" data-testid="select-booking-subject">
-                  <SelectValue placeholder="Select subject" />
-                </SelectTrigger>
-                <SelectContent>
-                  {subjectOptions.map((subj) => (
-                    <SelectItem key={subj} value={subj}>
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="h-4 w-4" />
-                        {subj}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {subjectOptions.length === 0 ? (
+                <div className="text-center py-2 px-3 border rounded-md text-muted-foreground text-sm">
+                  No subjects available - Debug: tutor.subjects = {JSON.stringify(tutor?.subjects)}
+                </div>
+              ) : (
+                <Select value={subject} onValueChange={setSubject}>
+                  <SelectTrigger id="subject" data-testid="select-booking-subject">
+                    <SelectValue placeholder="Select subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjectOptions.map((subj) => (
+                      <SelectItem key={subj} value={subj}>
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="h-4 w-4" />
+                          {subj}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="hours">Session Duration</Label>
