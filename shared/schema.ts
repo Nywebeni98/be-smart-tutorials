@@ -136,6 +136,31 @@ export const actionLogs = pgTable("action_logs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Chat messages table - for real-time messaging between students and tutors
+export const chatMessages = pgTable("chat_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversationId: varchar("conversation_id").notNull(), // Unique ID for each student-tutor pair
+  senderType: text("sender_type").notNull(), // 'student' or 'tutor'
+  senderEmail: text("sender_email").notNull(),
+  senderName: text("sender_name").notNull(),
+  receiverEmail: text("receiver_email").notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Chat conversations table - tracks unique conversations between students and tutors
+export const chatConversations = pgTable("chat_conversations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentEmail: text("student_email").notNull(),
+  studentName: text("student_name").notNull(),
+  tutorId: varchar("tutor_id").notNull(),
+  tutorEmail: text("tutor_email").notNull(),
+  tutorName: text("tutor_name").notNull(),
+  lastMessageAt: timestamp("last_message_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Zod schemas for validation
 export const insertContactSchema = createInsertSchema(contactSubmissions).omit({
   id: true,
@@ -279,3 +304,34 @@ export type InsertActionLog = {
   userId?: string | null;
   metadata?: string | null;
 };
+
+// Chat message schemas and types
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
+  id: true,
+  createdAt: true,
+  isRead: true,
+}).extend({
+  conversationId: z.string().min(1, "Conversation ID is required"),
+  senderType: z.enum(["student", "tutor"]),
+  senderEmail: z.string().email("Invalid sender email"),
+  senderName: z.string().min(1, "Sender name is required"),
+  receiverEmail: z.string().email("Invalid receiver email"),
+  message: z.string().min(1, "Message cannot be empty"),
+});
+
+export const insertChatConversationSchema = createInsertSchema(chatConversations).omit({
+  id: true,
+  createdAt: true,
+  lastMessageAt: true,
+}).extend({
+  studentEmail: z.string().email("Invalid student email"),
+  studentName: z.string().min(1, "Student name is required"),
+  tutorId: z.string().min(1, "Tutor ID is required"),
+  tutorEmail: z.string().email("Invalid tutor email"),
+  tutorName: z.string().min(1, "Tutor name is required"),
+});
+
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+export type ChatConversation = typeof chatConversations.$inferSelect;
+export type InsertChatConversation = z.infer<typeof insertChatConversationSchema>;
