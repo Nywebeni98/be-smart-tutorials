@@ -405,6 +405,23 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
                 <span>Duration:</span>
                 <span>{hoursNum} hour(s)</span>
               </div>
+              <div className="border-t border-border pt-2 mt-2">
+                <div className="flex items-center justify-between text-sm font-medium">
+                  <span className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    Amount to Pay:
+                  </span>
+                  <span className="text-lg font-bold" style={{ color: 'hsl(var(--brand-blue))' }}>
+                    {['Physical Sciences', 'Afrikaans'].includes(subject) 
+                      ? (hoursNum === 1 ? 'R250' : 'R500')
+                      : (hoursNum === 1 ? 'R200' : 'R400')
+                    }
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Please enter this amount on the Yoco payment page
+                </p>
+              </div>
             </div>
           )}
 
