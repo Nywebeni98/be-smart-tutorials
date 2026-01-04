@@ -490,7 +490,18 @@ export class DbStorage implements IStorage {
 export async function initializeDatabase(storage: DbStorage) {
   console.log('Initializing database with default data...');
   
-  // Payment links removed - now using single reusable Yoco link: https://pay.yoco.com/smart-tutor1
+  // Create single reusable Yoco payment link if not exists
+  const existingLinks = await storage.getAllPaymentLinks();
+  if (existingLinks.length === 0) {
+    console.log('Creating reusable Yoco payment link...');
+    await storage.createPaymentLink({ 
+      subject: 'All Subjects', 
+      hours: 1, 
+      amount: 0, 
+      url: 'https://pay.yoco.com/smart-tutor1' 
+    });
+    console.log('Reusable payment link created');
+  }
   
   // Check if admin exists, if not create default admin
   const existingAdmin = await storage.getAdminByUsername('Lisa98');
