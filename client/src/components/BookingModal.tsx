@@ -135,10 +135,13 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
     }
   }, [isOpen, tutor, subjectOptions]);
 
-  // Mutation to create Yoco checkout session (generates fresh payment URL every time)
-  const createCheckoutMutation = useMutation({
+  // Reusable Yoco payment link
+  const YOCO_PAYMENT_LINK = 'https://pay.yoco.com/smart-tutor1';
+
+  // Mutation to save booking and redirect to Yoco payment link
+  const createBookingMutation = useMutation({
     mutationFn: async (data: { tutorId: string; tutorName: string; availabilityId: string; subject: string; hours: number; amount: number; studentName: string; studentEmail: string }) => {
-      const response = await apiRequest('POST', '/api/yoco/create-checkout', {
+      const response = await apiRequest('POST', '/api/bookings/create-pending', {
         tutorId: data.tutorId,
         tutorName: data.tutorName,
         availabilityId: data.availabilityId,
@@ -151,19 +154,21 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
       return response.json();
     },
     onSuccess: (data: any) => {
-      if (data.success && data.redirectUrl) {
+      if (data.success) {
         // Clear all old session data before redirecting to Yoco
         sessionStorage.clear();
         
-        // Store booking ID for after payment
-        sessionStorage.setItem('yocoBookingId', data.bookingId);
+        // Store booking info for reference
+        sessionStorage.setItem('pendingBookingId', data.bookingId);
+        sessionStorage.setItem('bookingTutorName', data.tutorName || '');
+        sessionStorage.setItem('bookingSubject', data.subject || '');
 
-        // Redirect to fresh Yoco checkout URL (new session every time!)
-        window.location.href = data.redirectUrl;
+        // Redirect to reusable Yoco payment link
+        window.location.href = YOCO_PAYMENT_LINK;
       } else {
         toast({
-          title: 'Payment Error',
-          description: data.message || 'Failed to create payment session. Please try again.',
+          title: 'Booking Error',
+          description: data.message || 'Failed to create booking. Please try again.',
           variant: 'destructive',
         });
       }
@@ -171,7 +176,7 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to prepare payment. Please try again.',
+        description: error.message || 'Failed to prepare booking. Please try again.',
         variant: 'destructive',
       });
     },
@@ -220,8 +225,8 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
 
     const totalAmount = hourlyRate * parseInt(hours);
 
-    // Create a fresh Yoco checkout session (new payment URL every time!)
-    createCheckoutMutation.mutate({
+    // Create booking and redirect to reusable Yoco payment link
+    createBookingMutation.mutate({
       tutorId: tutor.id,
       tutorName: tutor.fullName,
       availabilityId: selectedSlot || '',
@@ -438,11 +443,11 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
             type="button"
             className="w-full"
             size="lg"
-            disabled={!selectedSlot || !subject || createCheckoutMutation.isPending}
+            disabled={!selectedSlot || !subject || createBookingMutation.isPending}
             onClick={handleProceedToPayment}
             data-testid="button-proceed-payment"
           >
-            {createCheckoutMutation.isPending ? (
+            {createBookingMutation.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Preparing Payment...

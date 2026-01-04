@@ -897,7 +897,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     'Afrikaans': { 1: 250, 2: 500 },
   };
 
-  // Yoco Payment Integration
+  // Create pending booking (for reusable Yoco payment link flow)
+  app.post("/api/bookings/create-pending", async (req, res) => {
+    try {
+      const { tutorId, tutorName, availabilityId, subject, studentName, studentEmail } = req.body;
+      const hours = Number(req.body.hours);
+      const amount = Number(req.body.amount);
+      
+      console.log("Create pending booking:", { tutorId, tutorName, subject, hours, amount, studentName, studentEmail });
+      
+      // Validate required fields
+      if (!tutorId || !subject || !hours || !amount || !studentName || !studentEmail) {
+        return res.status(400).json({
+          success: false,
+          message: "Missing required fields: tutorId, subject, hours, amount, studentName, studentEmail",
+        });
+      }
+
+      // Verify tutor exists
+      const tutorProfile = await storage.getTutorProfileById(tutorId);
+      if (!tutorProfile) {
+        return res.status(404).json({
+          success: false,
+          message: "Tutor not found",
+        });
+      }
+
+      // Create booking payment record with 'pending' status
+      const bookingPayment = await storage.createBookingPayment({
+        tutorId,
+        subject,
+        hours,
+        amount,
+        studentName,
+        studentEmail,
+        paymentStatus: 'pending',
+        sessionStartTime: null,
+        sessionEndTime: null,
+      });
+
+      console.log("Created pending booking:", bookingPayment.id);
+
+      res.json({
+        success: true,
+        bookingId: bookingPayment.id,
+        tutorName: tutorProfile.fullName,
+        subject,
+        amount,
+        message: "Booking created. Please complete payment via Yoco.",
+      });
+    } catch (error) {
+      console.error("Error creating pending booking:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
+  // Yoco Payment Integration (legacy - kept for compatibility)
   app.post("/api/yoco/create-checkout", async (req, res) => {
     try {
       const { tutorId, tutorName, availabilityId, subject, studentName, studentEmail, studentPhone } = req.body;
