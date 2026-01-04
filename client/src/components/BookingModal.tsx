@@ -254,8 +254,6 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
   if (!tutor) return null;
 
   const hoursNum = parseInt(hours) || 1;
-  const hourlyRate = subject ? FIXED_PRICING[subject] : 0;
-  const displayAmount = hourlyRate * hoursNum;
 
   // Show sign-in prompt if user is not logged in
   if (!user && !authLoading) {
@@ -432,13 +430,6 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
                 <span>Duration:</span>
                 <span>{hoursNum} hour(s)</span>
               </div>
-              <div className="border-t pt-2 flex items-center justify-between font-semibold">
-                <span>Amount to Pay:</span>
-                <span className="text-lg text-primary" data-testid="text-booking-total">R{displayAmount}</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                You will enter this amount on the Yoco payment page.
-              </p>
             </div>
           )}
 
@@ -464,7 +455,7 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
           </Button>
 
           <p className="text-xs text-center text-muted-foreground">
-            You will be redirected to Yoco where you enter the amount above. After payment, please email proof of payment to <strong>onlinepresenceimpact@gmail.com</strong> including the tutor name and subject.
+            You will be redirected to Yoco to complete payment. After payment, please email proof of payment to <strong>onlinepresenceimpact@gmail.com</strong> including the tutor name and subject.
           </p>
         </div>
       </DialogContent>
