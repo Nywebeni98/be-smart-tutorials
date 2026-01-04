@@ -902,15 +902,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { tutorId, tutorName, availabilityId, subject, studentName, studentEmail } = req.body;
       const hours = Number(req.body.hours);
-      const amount = Number(req.body.amount);
+      const amount = Number(req.body.amount) || 0;
       
       console.log("Create pending booking:", { tutorId, tutorName, subject, hours, amount, studentName, studentEmail });
       
-      // Validate required fields
-      if (!tutorId || !subject || !hours || !amount || !studentName || !studentEmail) {
+      // Validate required fields (amount can be 0 for reusable payment link)
+      if (!tutorId || !subject || !hours || !studentName || !studentEmail) {
         return res.status(400).json({
           success: false,
-          message: "Missing required fields: tutorId, subject, hours, amount, studentName, studentEmail",
+          message: "Missing required fields: tutorId, subject, hours, studentName, studentEmail",
         });
       }
 
