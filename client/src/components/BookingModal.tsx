@@ -423,10 +423,19 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
                   Amount to Pay:
                 </span>
                 <span className="text-lg font-bold" style={{ color: 'hsl(var(--brand-blue))' }}>
-                  {['Physical Sciences', 'Afrikaans'].includes(subject) 
-                    ? (hoursNum === 1 ? 'R250' : 'R500')
-                    : (hoursNum === 1 ? 'R200' : 'R400')
-                  }
+                  {(() => {
+                    let rate = 200;
+                    if (['Physical Sciences', 'Afrikaans'].includes(subject)) {
+                      rate = 250;
+                    } else if (subject === 'Applied Maths (University)') {
+                      rate = 220;
+                    } else if (subject === 'Frontend Development') {
+                      rate = 220;
+                    } else if (subject === 'Backend Development') {
+                      rate = 285;
+                    }
+                    return `R${rate * hoursNum}`;
+                  })()}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">

@@ -30,6 +30,7 @@ interface Tutor {
   hourlyRate: number;
   physicsRate?: number;
   backendRate?: number;
+  appliedMathsRate?: number;
   zoomUrl: string;
   highlights: {
     icon: typeof GraduationCap;
@@ -50,6 +51,7 @@ const tutors: Tutor[] = [
     bio: 'My name is Siyanda Stekela, and I am a professional Mathematics tutor with over 9 years of tutoring experience, specialising in all school grades and university-level Mathematics. I offer expert tutoring for both the CAPS curriculum and the Cambridge curriculum, supporting learners in achieving academic confidence and excellence.',
     quote: 'I am passionate about empowering students with the mathematical skills and confidence they need to succeed in their academic journey and beyond.',
     hourlyRate: 200,
+    appliedMathsRate: 220,
     zoomUrl: 'https://zoom.us/j/siyanda-stekela',
     highlights: [
       {
@@ -465,7 +467,7 @@ export function TutorsSection() {
                     <div className="flex items-center justify-center gap-2">
                       <DollarSign className="w-4 h-4" style={{ color: 'hsl(var(--brand-yellow))' }} />
                       <span className="font-semibold" style={{ color: 'hsl(var(--brand-orange))' }} data-testid={`text-rate-${tutor.id}`}>
-                        R{tutor.hourlyRate}/hour
+                        R{tutor.hourlyRate}/hour{tutor.backendRate ? ' (Frontend)' : tutor.appliedMathsRate ? ' (Maths/Maths Lit)' : ''}
                       </span>
                     </div>
                     {tutor.physicsRate && (
@@ -473,6 +475,22 @@ export function TutorsSection() {
                         <DollarSign className="w-4 h-4" style={{ color: 'hsl(var(--brand-yellow))' }} />
                         <span className="font-semibold" style={{ color: 'hsl(var(--brand-orange))' }} data-testid={`text-physics-rate-${tutor.id}`}>
                           R{tutor.physicsRate}/hour (Physics)
+                        </span>
+                      </div>
+                    )}
+                    {tutor.appliedMathsRate && (
+                      <div className="flex items-center justify-center gap-2">
+                        <DollarSign className="w-4 h-4" style={{ color: 'hsl(var(--brand-yellow))' }} />
+                        <span className="font-semibold" style={{ color: 'hsl(var(--brand-orange))' }} data-testid={`text-applied-maths-rate-${tutor.id}`}>
+                          R{tutor.appliedMathsRate}/hour (Applied Maths)
+                        </span>
+                      </div>
+                    )}
+                    {tutor.backendRate && (
+                      <div className="flex items-center justify-center gap-2">
+                        <DollarSign className="w-4 h-4" style={{ color: 'hsl(var(--brand-yellow))' }} />
+                        <span className="font-semibold" style={{ color: 'hsl(var(--brand-orange))' }} data-testid={`text-backend-rate-${tutor.id}`}>
+                          R{tutor.backendRate}/hour (Backend)
                         </span>
                       </div>
                     )}
