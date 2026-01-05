@@ -257,7 +257,7 @@ const tutors: Tutor[] = [
     name: 'Mhlangovuyo Balfour',
     title: 'Full-Stack Developer & IT Tutor',
     image: mhlangovuyoImage,
-    subjects: ['Frontend Development', 'Backend Development'],
+    subjects: ['Frontend Development (React, JavaScript, HTML, CSS)', 'Backend Development (C#, SQL, MongoDB)'],
     experience: '3+ Years Experience',
     education: 'Full-Stack Developer',
     bio: 'My name is Mhlangovuyo Balfour, and I am a Full-Stack Developer with 3 years of hands-on experience building robust and scalable applications. I specialise in backend development (C#, SQL, MongoDB) and frontend development using React, JavaScript, HTML, and CSS. I am passionate about technology and also enjoy mentoring others to understand and apply development concepts effectively.',
