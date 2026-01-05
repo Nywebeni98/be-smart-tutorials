@@ -83,7 +83,12 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
       if (!s || typeof s !== 'string') return;
       const lower = s.toLowerCase().trim();
       
-      if (lower.includes('maths') || lower.includes('mathematics')) {
+      // Check for specific maths variants first (before general maths check)
+      if (lower.includes('maths literacy') || lower.includes('maths lit')) {
+        if (!supportedSubjects.includes('Maths Literacy')) supportedSubjects.push('Maths Literacy');
+      } else if (lower.includes('applied maths') || lower.includes('applied mathematics')) {
+        if (!supportedSubjects.includes('Applied Maths (University)')) supportedSubjects.push('Applied Maths (University)');
+      } else if (lower.includes('maths') || lower.includes('mathematics')) {
         if (!supportedSubjects.includes('Maths')) supportedSubjects.push('Maths');
       }
       if (lower.includes('physical science')) {
@@ -109,6 +114,12 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
       }
       if (lower.includes('afrikaans')) {
         if (!supportedSubjects.includes('Afrikaans')) supportedSubjects.push('Afrikaans');
+      }
+      if (lower.includes('frontend') || lower.includes('front-end')) {
+        if (!supportedSubjects.includes('Frontend Development')) supportedSubjects.push('Frontend Development');
+      }
+      if (lower.includes('backend') || lower.includes('back-end')) {
+        if (!supportedSubjects.includes('Backend Development')) supportedSubjects.push('Backend Development');
       }
     });
     
