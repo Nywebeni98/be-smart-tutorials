@@ -4,6 +4,7 @@ import { Hero } from '@/components/Hero';
 import { SubjectsSection } from '@/components/SubjectsSection';
 import { AboutSection } from '@/components/AboutSection';
 import { TutorsSection } from '@/components/TutorsSection';
+import { PackagesSection } from '@/components/PackagesSection';
 import { VideoSection } from '@/components/VideoSection';
 import { ContactSection } from '@/components/ContactSection';
 import { Footer } from '@/components/Footer';
@@ -27,6 +28,9 @@ export default function Home() {
         
         {/* Meet our tutors */}
         <TutorsSection />
+        
+        {/* Monthly Packages */}
+        <PackagesSection />
         
         {/* Video testimonials and benefits */}
         <VideoSection />
