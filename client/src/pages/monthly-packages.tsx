@@ -23,9 +23,14 @@ const AVAILABLE_SUBJECTS = [
   'Physical Sciences',
   'English',
   'Maths Literacy',
+  'Applied Maths (University)',
   'Afrikaans',
   'Life Sciences',
   'Geography',
+  'History',
+  'CAT',
+  'Frontend Development',
+  'Backend Development',
 ];
 
 // Package definitions

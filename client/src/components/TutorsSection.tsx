@@ -44,7 +44,7 @@ const tutors: Tutor[] = [
     name: 'Siyanda Stekela',
     title: 'Professional Maths Tutor',
     image: siyandaImage,
-    subjects: ['Maths', 'CAPS Curriculum', 'Cambridge Curriculum'],
+    subjects: ['Maths', 'Maths Literacy', 'Applied Maths (University)', 'CAPS Curriculum', 'Cambridge Curriculum'],
     experience: '9+ Years Experience',
     education: 'BSc Mathematics, Computer Science & Statistics - UCT',
     bio: 'My name is Siyanda Stekela, and I am a professional Mathematics tutor with over 9 years of tutoring experience, specialising in all school grades and university-level Mathematics. I offer expert tutoring for both the CAPS curriculum and the Cambridge curriculum, supporting learners in achieving academic confidence and excellence.',
