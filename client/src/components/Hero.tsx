@@ -1,16 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { GraduationCap, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
+import { GraduationCap, BookOpen } from 'lucide-react';
 
 const slides = [
   {
-    headline: 'Excel in Your Studies with',
-    brandName: 'Be Smart Online Tutorials',
     subtext: 'Quality, affordable tutoring in Mathematics, Science, English, and more. Empowering students across South Africa to achieve academic excellence.',
   },
   {
-    headline: 'South Africa Learns Here –',
-    brandName: 'Anywhere, Anytime',
     subtext: 'Accessible online tutoring designed to help every learner succeed—anytime, anywhere.',
   },
 ];
@@ -22,12 +18,8 @@ export function Hero() {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
   }, []);
 
-  const prevSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  }, []);
-
   useEffect(() => {
-    const interval = setInterval(nextSlide, 6000);
+    const interval = setInterval(nextSlide, 5000);
     return () => clearInterval(interval);
   }, [nextSlide]);
 
@@ -58,69 +50,47 @@ export function Hero() {
             </span>
           </div>
 
-          <div className="relative min-h-[280px] sm:min-h-[240px]">
-            {slides.map((slide, index) => (
-              <div
-                key={index}
-                className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                  index === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                }`}
-              >
-                <h1 
-                  className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl text-white leading-tight"
-                  data-testid={`text-hero-headline-${index}`}
-                >
-                  {slide.headline}
-                  <span 
-                    className="block mt-2"
-                    style={{ color: 'hsl(var(--brand-yellow))' }}
-                  >
-                    {slide.brandName}
-                  </span>
-                </h1>
+          <h1 
+            className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl text-white leading-tight"
+            data-testid="text-hero-headline"
+          >
+            Excel in Your Studies with
+            <span 
+              className="block mt-2"
+              style={{ color: 'hsl(var(--brand-yellow))' }}
+            >
+              Be Smart Online Tutorials
+            </span>
+          </h1>
 
-                <p 
-                  className="text-lg sm:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed mt-6"
-                  data-testid={`text-hero-subheadline-${index}`}
-                >
-                  {slide.subtext}
-                </p>
-              </div>
+          <div className="relative min-h-[100px] sm:min-h-[80px]">
+            {slides.map((slide, index) => (
+              <p
+                key={index}
+                className={`absolute inset-x-0 text-lg sm:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed transition-all duration-700 ease-in-out ${
+                  index === currentSlide 
+                    ? 'opacity-100 translate-y-0' 
+                    : 'opacity-0 translate-y-4 pointer-events-none'
+                }`}
+                data-testid={`text-hero-subheadline-${index}`}
+              >
+                {slide.subtext}
+              </p>
             ))}
           </div>
 
-          <div className="flex items-center justify-center gap-4 pt-2">
-            <button
-              onClick={prevSlide}
-              className="p-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-colors"
-              data-testid="button-prev-slide"
-              aria-label="Previous slide"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            
-            <div className="flex gap-2">
-              {slides.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentSlide(index)}
-                  className={`w-3 h-3 rounded-full transition-colors ${
-                    index === currentSlide ? 'bg-white' : 'bg-white/40'
-                  }`}
-                  data-testid={`button-slide-indicator-${index}`}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
-            </div>
-            
-            <button
-              onClick={nextSlide}
-              className="p-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-colors"
-              data-testid="button-next-slide"
-              aria-label="Next slide"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+          <div className="flex justify-center gap-2 pt-2">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  index === currentSlide ? 'bg-white scale-110' : 'bg-white/40 hover:bg-white/60'
+                }`}
+                data-testid={`button-slide-indicator-${index}`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
