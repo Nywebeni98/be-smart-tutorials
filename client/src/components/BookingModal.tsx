@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { Loader2, CreditCard, Calendar, Clock, User, BookOpen, Mail, LogIn } from 'lucide-react';
+import { Loader2, CreditCard, Calendar, Clock, User, BookOpen, Mail, LogIn, FileText, ArrowLeft } from 'lucide-react';
 import type { TutorProfile, Availability } from '@shared/schema';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -25,6 +25,9 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
   const [subject, setSubject] = useState<string>('');
   const [studentName, setStudentName] = useState<string>('');
   const [studentEmail, setStudentEmail] = useState<string>('');
+  const [step, setStep] = useState<'booking' | 'consent'>('booking');
+
+  const CONSENT_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfmMC1S4gRVTQGH8VkY6HI4jJ6ZKATxvnBNFI8mpjFd4hJcHA/viewform?embedded=true";
 
   // Clear session storage on open to prevent stale payment success data
   useEffect(() => {
@@ -182,7 +185,7 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
     },
   });
 
-  const handleProceedToPayment = () => {
+  const handleShowConsentForm = () => {
     if (!tutor || !subject) {
       toast({
         title: 'Missing Information',
@@ -212,6 +215,13 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
       return;
     }
 
+    // Show consent form step
+    setStep('consent');
+  };
+
+  const handleProceedToPayment = () => {
+    if (!tutor) return;
+    
     // Create booking and redirect to reusable Yoco payment link (student enters amount on Yoco)
     createBookingMutation.mutate({
       tutorId: tutor.id,
@@ -231,6 +241,7 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
     setSubject('');
     setStudentName('');
     setStudentEmail('');
+    setStep('booking');
   };
 
   const handleClose = () => {
@@ -278,6 +289,78 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
             <Button variant="outline" onClick={handleClose} data-testid="button-cancel-signin">
               Cancel
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (step === 'consent') {
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Student & Parent Consent Form
+            </DialogTitle>
+            <DialogDescription>
+              Please review and complete the consent form below. You may skip this step if you prefer.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="border rounded-lg overflow-hidden">
+              <iframe 
+                src={CONSENT_FORM_URL}
+                width="100%" 
+                height="500" 
+                frameBorder="0" 
+                marginHeight={0} 
+                marginWidth={0}
+                title="Student & Parent Consent and Non-Disclosure Agreement Form"
+                className="w-full"
+              >
+                Loading...
+              </iframe>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep('booking')}
+                className="flex-1"
+                data-testid="button-back-to-booking"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button
+                type="button"
+                className="flex-1"
+                size="lg"
+                disabled={createBookingMutation.isPending}
+                onClick={handleProceedToPayment}
+                data-testid="button-continue-to-payment"
+              >
+                {createBookingMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Preparing Payment...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Continue to Payment
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <p className="text-xs text-center text-muted-foreground">
+              By continuing, you agree to our terms. After payment, please email proof of payment to <strong>onlinepresenceimpact@gmail.com</strong>.
+            </p>
           </div>
         </DialogContent>
       </Dialog>
@@ -448,25 +531,16 @@ export function BookingModal({ isOpen, onClose, tutor }: BookingModalProps) {
             type="button"
             className="w-full"
             size="lg"
-            disabled={!selectedSlot || !subject || createBookingMutation.isPending}
-            onClick={handleProceedToPayment}
+            disabled={!selectedSlot || !subject}
+            onClick={handleShowConsentForm}
             data-testid="button-proceed-payment"
           >
-            {createBookingMutation.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Preparing Payment...
-              </>
-            ) : (
-              <>
-                <CreditCard className="mr-2 h-4 w-4" />
-                Proceed to Payment
-              </>
-            )}
+            <FileText className="mr-2 h-4 w-4" />
+            Continue to Consent Form
           </Button>
 
           <p className="text-xs text-center text-muted-foreground">
-            You will be redirected to Yoco to complete payment. After payment, please email proof of payment to <strong>onlinepresenceimpact@gmail.com</strong> including the tutor name and subject.
+            Next step: Complete the consent form, then proceed to payment.
           </p>
         </div>
       </DialogContent>
