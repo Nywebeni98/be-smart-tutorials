@@ -497,7 +497,7 @@ export default function TutorDashboard() {
               Your Available Time Slots
             </CardTitle>
             <CardDescription>
-              Students can book these time slots for tutoring sessions
+              Students can book these time slots for tutoring sessions (South Africa Time - SAST)
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -513,40 +513,93 @@ export default function TutorDashboard() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {availabilities.map((slot) => (
-                  <div 
-                    key={slot.id} 
-                    className="flex items-center justify-between p-4 rounded-lg border"
-                    data-testid={`availability-slot-${slot.id}`}
-                  >
-                    <div className="flex flex-wrap items-center gap-4">
-                      <div className="flex items-center gap-2">
+              <div className="space-y-6">
+                {/* Group slots by date */}
+                {Object.entries(
+                  [...availabilities]
+                    .sort((a, b) => {
+                      // Sort by date first, then by start time
+                      if (a.date !== b.date) {
+                        return (a.date || '') < (b.date || '') ? -1 : 1;
+                      }
+                      return (a.startTime || '') < (b.startTime || '') ? -1 : 1;
+                    })
+                    .reduce((groups: Record<string, typeof availabilities>, slot) => {
+                      const dateKey = slot.date || 'No Date';
+                      if (!groups[dateKey]) groups[dateKey] = [];
+                      groups[dateKey].push(slot);
+                      return groups;
+                    }, {})
+                ).map(([date, slots]) => {
+                  // Format the date nicely
+                  const dateObj = date !== 'No Date' ? new Date(date + 'T12:00:00') : null;
+                  const formattedDate = dateObj 
+                    ? dateObj.toLocaleDateString('en-ZA', { 
+                        weekday: 'long', 
+                        day: 'numeric', 
+                        month: 'short', 
+                        year: 'numeric',
+                        timeZone: 'Africa/Johannesburg'
+                      })
+                    : date;
+                  
+                  // Check if date is today or in the past
+                  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Johannesburg' });
+                  const isToday = date === today;
+                  const isPast = date !== 'No Date' && date < today;
+                  
+                  return (
+                    <div key={date} className="space-y-2" data-testid={`date-group-${date}`}>
+                      <div className="flex items-center gap-2 pb-2 border-b">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{slot.date}</span>
+                        <span className="font-semibold">{formattedDate}</span>
+                        {isToday && (
+                          <Badge variant="outline" className="border-blue-500 text-blue-600">Today</Badge>
+                        )}
+                        {isPast && (
+                          <Badge variant="outline" className="border-gray-400 text-gray-500">Past</Badge>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span>{slot.startTime} - {slot.endTime}</span>
+                      <div className="space-y-2 pl-6">
+                        {slots.map((slot) => (
+                          <div 
+                            key={slot.id} 
+                            className={`flex items-center justify-between p-3 rounded-lg border ${
+                              slot.isBooked 
+                                ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800' 
+                                : isPast 
+                                  ? 'bg-gray-50 dark:bg-gray-900/20 opacity-60' 
+                                  : ''
+                            }`}
+                            data-testid={`availability-slot-${slot.id}`}
+                          >
+                            <div className="flex flex-wrap items-center gap-3">
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">{slot.startTime} - {slot.endTime}</span>
+                              </div>
+                              {slot.notes && (
+                                <Badge variant="secondary">{slot.notes}</Badge>
+                              )}
+                              {slot.isBooked && (
+                                <Badge variant="default" className="bg-green-600">Booked</Badge>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteAvailabilityMutation.mutate(slot.id)}
+                              disabled={deleteAvailabilityMutation.isPending || !!slot.isBooked}
+                              data-testid={`button-delete-slot-${slot.id}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          </div>
+                        ))}
                       </div>
-                      {slot.notes && (
-                        <Badge variant="secondary">{slot.notes}</Badge>
-                      )}
-                      {slot.isBooked && (
-                        <Badge variant="default" className="bg-green-600">Booked</Badge>
-                      )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deleteAvailabilityMutation.mutate(slot.id)}
-                      disabled={deleteAvailabilityMutation.isPending || !!slot.isBooked}
-                      data-testid={`button-delete-slot-${slot.id}`}
-                    >
-                      <Trash2 className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
