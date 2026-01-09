@@ -1824,18 +1824,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { tutorId } = req.params;
       const availabilities = await storage.getAvailabilitiesByTutor(tutorId);
       
-      // Get today's date in SA timezone
-      const today = new Date();
-      const todayStr = today.toLocaleDateString('en-CA', { timeZone: 'Africa/Johannesburg' });
+      // Get today's date and time in SA timezone
+      const now = new Date();
+      const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Africa/Johannesburg' });
+      
+      // Get current time in minutes since midnight (SA timezone)
+      const saTimeStr = now.toLocaleTimeString('en-ZA', { 
+        timeZone: 'Africa/Johannesburg', 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+      const [currentHours, currentMinutes] = saTimeStr.split(':').map(Number);
+      const currentMinutesSinceMidnight = currentHours * 60 + currentMinutes;
+      
+      // Helper to parse time string (HH:mm or H:mm) to minutes since midnight
+      const parseTimeToMinutes = (timeStr: string): number => {
+        if (!timeStr) return 0;
+        const parts = timeStr.split(':');
+        const hours = parseInt(parts[0], 10) || 0;
+        const minutes = parseInt(parts[1], 10) || 0;
+        return hours * 60 + minutes;
+      };
       
       // Filter to only show non-booked, future slots
       const publicSlots = availabilities.filter(slot => {
-        // Exclude booked slots
+        // Exclude booked slots - security critical (use truthiness check for any truthy value)
         if (slot.isBooked) return false;
+        
         // Exclude past dates
         if (slot.date && slot.date < todayStr) return false;
+        
+        // Exclude today's slots that have already started (numeric comparison)
+        if (slot.date === todayStr && slot.startTime) {
+          const slotStartMinutes = parseTimeToMinutes(slot.startTime);
+          if (slotStartMinutes <= currentMinutesSinceMidnight) {
+            return false;
+          }
+        }
+        
         return true;
       }).map(slot => ({
+        // Only expose safe, non-sensitive fields
         id: slot.id,
         date: slot.date,
         day: slot.day,

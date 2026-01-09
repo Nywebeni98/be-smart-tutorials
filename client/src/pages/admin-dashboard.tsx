@@ -1014,6 +1014,40 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="bookings" className="space-y-6">
+            {/* Booking Statistics */}
+            <div className="grid gap-4 md:grid-cols-4">
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <p className="text-3xl font-bold">{bookings.length}</p>
+                  <p className="text-sm text-muted-foreground">Total Bookings</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <p className="text-3xl font-bold text-green-600">
+                    {bookings.filter(b => b.paymentStatus === 'completed').length}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Completed Payments</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <p className="text-3xl font-bold text-yellow-600">
+                    {bookings.filter(b => b.paymentStatus === 'pending').length}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Pending Payments</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <p className="text-3xl font-bold">
+                    R{bookings.filter(b => b.paymentStatus === 'completed').reduce((sum, b) => sum + (b.amount || 0), 0)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Total Revenue</p>
+                </CardContent>
+              </Card>
+            </div>
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1021,7 +1055,7 @@ export default function AdminDashboard() {
                   All Bookings
                 </CardTitle>
                 <CardDescription>
-                  View all tutoring session bookings
+                  View all tutoring session bookings with payment and session status
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1033,35 +1067,102 @@ export default function AdminDashboard() {
                   <p className="text-center py-8 text-muted-foreground">No bookings yet.</p>
                 ) : (
                   <div className="space-y-4">
-                    {bookings.map((booking) => (
-                      <Card key={booking.id} data-testid={`admin-booking-${booking.id}`}>
-                        <CardContent className="pt-4">
-                          <div className="grid gap-4 md:grid-cols-3">
-                            <div>
-                              <p className="text-sm text-muted-foreground">Student</p>
-                              <p className="font-medium">{booking.studentName}</p>
-                              <p className="text-sm">{booking.studentEmail}</p>
+                    {bookings.map((booking) => {
+                      // Determine session status
+                      const now = new Date();
+                      const sessionStart = booking.sessionStartTime ? new Date(booking.sessionStartTime) : null;
+                      const sessionEnd = booking.sessionEndTime ? new Date(booking.sessionEndTime) : null;
+                      
+                      let sessionStatus: 'scheduled' | 'in_progress' | 'completed' | 'not_scheduled' = 'not_scheduled';
+                      if (sessionStart && sessionEnd) {
+                        if (now < sessionStart) sessionStatus = 'scheduled';
+                        else if (now >= sessionStart && now <= sessionEnd) sessionStatus = 'in_progress';
+                        else sessionStatus = 'completed';
+                      }
+                      
+                      // Get tutor info
+                      const tutor = tutorProfiles.find(t => t.id === booking.tutorId);
+                      
+                      return (
+                        <Card 
+                          key={booking.id} 
+                          className={sessionStatus === 'in_progress' ? 'border-2 border-green-500' : ''}
+                          data-testid={`admin-booking-${booking.id}`}
+                        >
+                          <CardContent className="pt-4">
+                            <div className="grid gap-4 md:grid-cols-4">
+                              <div>
+                                <p className="text-sm text-muted-foreground">Student</p>
+                                <p className="font-medium">{booking.studentName}</p>
+                                <p className="text-sm">{booking.studentEmail}</p>
+                                {booking.studentPhone && (
+                                  <p className="text-sm flex items-center gap-1 mt-1">
+                                    <Phone className="h-3 w-3" />
+                                    {booking.studentPhone}
+                                  </p>
+                                )}
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground">Tutor & Subject</p>
+                                <p className="font-medium">{tutor?.fullName || 'Unknown Tutor'}</p>
+                                {booking.subject && (
+                                  <Badge variant="secondary" className="mt-1">{booking.subject}</Badge>
+                                )}
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground">Session Details</p>
+                                <p className="font-medium">{booking.hours} hour(s) - R{booking.amount}</p>
+                                {sessionStart && (
+                                  <div className="text-sm flex items-center gap-1 mt-1">
+                                    <Calendar className="h-3 w-3" />
+                                    {sessionStart.toLocaleDateString('en-ZA', { timeZone: 'Africa/Johannesburg' })}
+                                  </div>
+                                )}
+                                {sessionStart && (
+                                  <div className="text-sm flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {sessionStart.toLocaleTimeString('en-ZA', { timeZone: 'Africa/Johannesburg', timeStyle: 'short' })}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-col items-end gap-2">
+                                {/* Payment Status */}
+                                <Badge 
+                                  variant={booking.paymentStatus === 'completed' ? 'default' : 'secondary'}
+                                  className={booking.paymentStatus === 'completed' ? 'bg-green-600' : 'bg-yellow-600'}
+                                >
+                                  {booking.paymentStatus === 'completed' ? 'Paid' : 'Payment Pending'}
+                                </Badge>
+                                {/* Session Status */}
+                                <Badge 
+                                  variant="outline"
+                                  className={
+                                    sessionStatus === 'in_progress' ? 'border-green-500 text-green-600' :
+                                    sessionStatus === 'completed' ? 'border-gray-400 text-gray-500' :
+                                    sessionStatus === 'scheduled' ? 'border-blue-500 text-blue-600' :
+                                    'border-gray-300 text-gray-400'
+                                  }
+                                >
+                                  {sessionStatus === 'in_progress' ? 'In Progress' :
+                                   sessionStatus === 'completed' ? 'Session Done' :
+                                   sessionStatus === 'scheduled' ? 'Scheduled' :
+                                   'Not Scheduled'}
+                                </Badge>
+                                {booking.meetingLink && (
+                                  <Badge variant="outline" className="text-xs">
+                                    <Video className="h-3 w-3 mr-1" />
+                                    Zoom Link Set
+                                  </Badge>
+                                )}
+                                <p className="text-xs text-muted-foreground">
+                                  Booked: {new Date(booking.createdAt).toLocaleDateString('en-ZA', { timeZone: 'Africa/Johannesburg' })}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Booking Details</p>
-                              <p className="font-medium">{booking.hours} hour(s)</p>
-                              <p className="text-sm">R{booking.amount}</p>
-                            </div>
-                            <div className="flex flex-col items-end">
-                              <Badge 
-                                variant={booking.paymentStatus === 'completed' ? 'default' : 'secondary'}
-                                className={booking.paymentStatus === 'completed' ? 'bg-green-600' : ''}
-                              >
-                                {booking.paymentStatus === 'completed' ? 'Paid' : 'Pending'}
-                              </Badge>
-                              <p className="text-xs text-muted-foreground mt-2">
-                                {new Date(booking.createdAt).toLocaleDateString()}
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
