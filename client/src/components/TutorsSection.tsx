@@ -401,27 +401,27 @@ export function TutorsSection() {
             style={{ backgroundColor: 'hsl(var(--brand-orange) / 0.15)' }}
             data-testid="payment-instructions-banner"
           >
-            <p className="text-xl sm:text-2xl font-bold text-orange-600 dark:text-orange-400">
+            <p className="text-base sm:text-lg font-bold text-orange-600 dark:text-orange-400">
               AFTER PAYMENT, PLEASE SHARE YOUR PROOF OF PAYMENT TO:
             </p>
-            <p className="text-2xl sm:text-3xl font-bold text-orange-700 dark:text-orange-300 mt-2">
+            <p className="text-lg sm:text-xl font-bold text-orange-700 dark:text-orange-300 mt-2">
               onlinepresenceimpact@gmail.com
             </p>
-            <p className="text-xl sm:text-2xl font-bold text-orange-700 dark:text-orange-300 mt-4 bg-orange-200 dark:bg-orange-800/50 py-2 px-4 rounded-lg inline-block">
+            <p className="text-base sm:text-lg font-bold text-orange-700 dark:text-orange-300 mt-4 bg-orange-200 dark:bg-orange-800/50 py-2 px-4 rounded-lg inline-block">
               A Zoom meeting link will be shared with you.
             </p>
-            <p className="text-base sm:text-lg font-medium text-orange-600 dark:text-orange-400 mt-3">
+            <p className="text-sm sm:text-base font-medium text-orange-600 dark:text-orange-400 mt-3">
               Please include the <span className="font-bold">TUTOR NAME</span> and <span className="font-bold">SUBJECT</span> you are booking in your email.
             </p>
             
             <Button
               asChild
-              className="mt-6 bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-6 h-auto"
+              className="mt-6 bg-blue-600 hover:bg-blue-700 text-white text-base px-6 py-4 h-auto"
               size="lg"
               data-testid="button-join-zoom-home"
             >
               <Link href="/payment/success">
-                <Video className="w-6 h-6 mr-2" />
+                <Video className="w-5 h-5 mr-2" />
                 Join Zoom
               </Link>
             </Button>
