@@ -1,5 +1,5 @@
 import { db } from './db';
-import { eq } from 'drizzle-orm';
+import { eq, lt, and, isNull, or } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { desc } from 'drizzle-orm';
@@ -146,6 +146,78 @@ export class DbStorage implements IStorage {
     }
     
     return result.length > 0;
+  }
+
+  // Clean up past availability slots (for dates that have passed)
+  async cleanupPastAvailability(): Promise<number> {
+    const today = new Date();
+    // Format as YYYY-MM-DD in Africa/Johannesburg timezone
+    const todayStr = today.toLocaleDateString('en-CA', { timeZone: 'Africa/Johannesburg' });
+    
+    // Delete availability slots where the date has passed
+    const result = await db.delete(tutorAvailability)
+      .where(lt(tutorAvailability.date, todayStr))
+      .returning();
+    
+    if (result.length > 0) {
+      await this.createActionLog({
+        actionType: 'availability_cleanup',
+        description: `Cleaned up ${result.length} past availability slot(s)`,
+        userId: 'system',
+        metadata: JSON.stringify({ count: result.length, date: todayStr }),
+      });
+    }
+    
+    return result.length;
+  }
+
+  // Get upcoming sessions within specified hours for reminders
+  async getUpcomingSessionsForReminders(hoursAhead: number): Promise<BookingPayment[]> {
+    const now = new Date();
+    const futureTime = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);
+    
+    const bookings = await db.select().from(bookingPayments)
+      .where(and(
+        eq(bookingPayments.isActive, true),
+        eq(bookingPayments.reminderSent, false),
+        eq(bookingPayments.paymentStatus, 'completed')
+      ));
+    
+    // Filter sessions that start within the specified hours
+    return bookings.filter(booking => {
+      if (!booking.sessionStartTime) return false;
+      const sessionStart = new Date(booking.sessionStartTime);
+      return sessionStart > now && sessionStart <= futureTime;
+    });
+  }
+
+  // Mark reminder as sent for a booking
+  async markReminderSent(bookingId: string): Promise<void> {
+    await db.update(bookingPayments)
+      .set({ reminderSent: true })
+      .where(eq(bookingPayments.id, bookingId));
+  }
+
+  // Get upcoming sessions for a specific tutor (for in-app notifications)
+  async getUpcomingSessionsForTutor(tutorId: string): Promise<BookingPayment[]> {
+    const now = new Date();
+    const bookings = await db.select().from(bookingPayments)
+      .where(and(
+        eq(bookingPayments.tutorId, tutorId),
+        eq(bookingPayments.isActive, true),
+        eq(bookingPayments.paymentStatus, 'completed')
+      ));
+    
+    // Filter to only include future sessions
+    return bookings.filter(booking => {
+      if (!booking.sessionStartTime) return false;
+      const sessionStart = new Date(booking.sessionStartTime);
+      return sessionStart > now;
+    }).sort((a, b) => {
+      const aTime = new Date(a.sessionStartTime!).getTime();
+      const bTime = new Date(b.sessionStartTime!).getTime();
+      return aTime - bTime;
+    });
   }
 
   // Tutor profile methods

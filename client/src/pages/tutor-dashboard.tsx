@@ -8,8 +8,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, LogOut, Loader2, GraduationCap, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Calendar, Clock, LogOut, Loader2, GraduationCap, Plus, Trash2, Eye, EyeOff, Bell, Users, AlertCircle } from 'lucide-react';
 import type { Availability, TutorProfile } from '@shared/schema';
+
+interface UpcomingSession {
+  id: string;
+  studentName: string;
+  studentEmail: string;
+  subject: string | null;
+  hours: number;
+  sessionStartTime: string | null;
+  sessionEndTime: string | null;
+  meetingLink: string | null;
+  hoursUntil: number | null;
+  isWithin24Hours: boolean;
+}
 
 export default function TutorDashboard() {
   const [, setLocation] = useLocation();
@@ -138,6 +151,25 @@ export default function TutorDashboard() {
     enabled: !!tutorProfile?.id,
   });
 
+  // Fetch upcoming sessions for notifications
+  const { data: upcomingSessionsData, isLoading: loadingUpcomingSessions } = useQuery<{ success: boolean; sessions: UpcomingSession[] }>({
+    queryKey: ['/api/tutor/upcoming-sessions'],
+    enabled: !!tutorToken,
+    refetchInterval: 60000, // Refetch every minute
+    queryFn: async () => {
+      const response = await fetch('/api/tutor/upcoming-sessions', {
+        headers: {
+          'x-tutor-token': tutorToken || '',
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch sessions');
+      return response.json();
+    },
+  });
+
+  const upcomingSessions = upcomingSessionsData?.sessions || [];
+  const urgentSessions = upcomingSessions.filter(s => s.isWithin24Hours);
+
   const addAvailabilityMutation = useMutation({
     mutationFn: async (data: typeof availabilityForm) => {
       // Parse date correctly - add 'T12:00:00' to avoid timezone issues
@@ -217,6 +249,7 @@ export default function TutorDashboard() {
                   placeholder="your.email@example.com"
                   value={loginForm.email}
                   onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                  autoComplete="email"
                   required
                   data-testid="input-tutor-email"
                 />
@@ -302,6 +335,86 @@ export default function TutorDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-3xl">
+        {/* Upcoming Sessions Notifications */}
+        {upcomingSessions.length > 0 && (
+          <Card className="mb-6 border-2" style={{ borderColor: urgentSessions.length > 0 ? 'hsl(var(--brand-orange))' : 'hsl(var(--brand-blue))' }}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Upcoming Sessions
+                {urgentSessions.length > 0 && (
+                  <Badge variant="destructive" className="ml-2">
+                    {urgentSessions.length} within 24 hours
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription>
+                Your scheduled tutoring sessions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingUpcomingSessions ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {upcomingSessions.map((session) => (
+                    <div 
+                      key={session.id} 
+                      className={`p-4 rounded-lg border ${session.isWithin24Hours ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800' : 'bg-muted/50'}`}
+                      data-testid={`session-notification-${session.id}`}
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{session.studentName}</span>
+                            {session.isWithin24Hours && (
+                              <Badge variant="destructive" className="text-xs">
+                                <AlertCircle className="h-3 w-3 mr-1" />
+                                {session.hoursUntil}h away
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">{session.studentEmail}</p>
+                          <div className="flex flex-wrap items-center gap-4 text-sm">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              {session.sessionStartTime 
+                                ? new Date(session.sessionStartTime).toLocaleDateString('en-ZA', { timeZone: 'Africa/Johannesburg', dateStyle: 'medium' })
+                                : 'Date TBD'}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              {session.sessionStartTime 
+                                ? new Date(session.sessionStartTime).toLocaleTimeString('en-ZA', { timeZone: 'Africa/Johannesburg', timeStyle: 'short' })
+                                : 'Time TBD'}
+                            </span>
+                            {session.subject && (
+                              <Badge variant="secondary">{session.subject}</Badge>
+                            )}
+                          </div>
+                        </div>
+                        {session.meetingLink && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => window.open(session.meetingLink!, '_blank')}
+                            data-testid={`button-join-session-${session.id}`}
+                          >
+                            Join Session
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

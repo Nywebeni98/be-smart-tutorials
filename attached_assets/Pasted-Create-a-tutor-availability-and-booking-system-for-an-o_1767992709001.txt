@@ -1,0 +1,66 @@
+Create a tutor availability and booking system for an online tutoring platform.
+
+TECH STACK:
+- Backend: Node.js + Express
+- Database: JSON (or SQLite if preferred)
+- Frontend: HTML/CSS/JS (calendar-based UI)
+- Timezone: South Africa (Africa/Johannesburg)
+
+FEATURE REQUIREMENTS:
+
+1. TUTOR AVAILABILITY CALENDAR
+- Tutors must be able to add their available dates and time slots using a calendar UI.
+- The calendar must use the South African date format and timezone (Africa/Johannesburg).
+- Availability must always be based on the current present day.
+- Any date that has already passed must automatically be removed from availability without manual action (cron job or server-side cleanup).
+
+2. AUTO-REMOVE AVAILABILITY WHEN BOOKED
+- When a student books a tutor’s available date/time:
+  - That slot must immediately disappear from the public calendar.
+  - Other students must NOT see the tutor as available for that slot.
+- Prevent double-booking at database level.
+
+3. ADMIN DASHBOARD (BOOKING + PAYMENT STATUS)
+- Admin must see:
+  - Tutor name
+  - Student name
+  - Date & time booked
+  - Booking status (Booked / Cancelled)
+  - Payment status (Paid / Not Paid)
+- Booking is only confirmed if payment is marked as PAID.
+- Admin view must update in real time or on refresh.
+
+4. PAYMENT CONFIRMATION LOGIC
+- Link bookings with payment records.
+- Only show booking as CONFIRMED if payment = successful.
+- If payment fails or is pending, slot must remain unavailable until resolved (admin-controlled).
+
+5. AUTOMATIC NOTIFICATIONS (IMPORTANT)
+- If a session is 1 day (24 hours) away:
+  - Send an automatic email notification to the tutor.
+  - Show an in-app notification inside the tutor dashboard after login.
+- Email must include:
+  - Student name
+  - Date and time
+  - Subject/session info
+
+6. TUTOR LOGIN & EMAIL INPUT BUG FIX
+- Fix the issue where tutor email input field does not allow copy-paste.
+- Ensure:
+  - Email field supports paste (Ctrl+V / right-click paste)
+  - Proper input type="email"
+  - No JavaScript blocking paste events
+- Ensure tutors can log in successfully using email + password.
+
+7. SECURITY & VALIDATION
+- Tutors can only see their own availability and bookings.
+- Admin has full access.
+- Validate all dates, times, and payments server-side.
+
+OUTPUT EXPECTATIONS:
+- Working booking calendar UI
+- Auto-clearing past dates
+- Auto-hiding booked slots
+- Admin dashboard with payment + booking status
+- Tutor email + in-app notifications
+- Fixed login/email paste issue

@@ -236,6 +236,65 @@ setInterval(() => {
   });
 }, 5 * 60 * 1000);
 
+// Clean up past availability slots every hour (Africa/Johannesburg timezone)
+setInterval(async () => {
+  try {
+    const deletedCount = await storage.cleanupPastAvailability();
+    if (deletedCount > 0) {
+      console.log(`[Cleanup] Removed ${deletedCount} past availability slot(s)`);
+    }
+  } catch (error) {
+    console.error('[Cleanup] Error cleaning up past availability:', error);
+  }
+}, 60 * 60 * 1000); // Every hour
+
+// Send 24-hour session reminders every 30 minutes
+setInterval(async () => {
+  try {
+    const upcomingSessions = await storage.getUpcomingSessionsForReminders(24);
+    
+    for (const session of upcomingSessions) {
+      // Get tutor info
+      const tutor = await storage.getTutorProfileById(session.tutorId);
+      if (!tutor) continue;
+      
+      // Send email reminder to tutor
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const sessionDate = session.sessionStartTime ? new Date(session.sessionStartTime).toLocaleString('en-ZA', { timeZone: 'Africa/Johannesburg' }) : 'Not specified';
+      
+      try {
+        await resend.emails.send({
+          from: 'Be Smart Online Tutorials <bookings@besmartonline.co.za>',
+          to: tutor.email,
+          subject: `Reminder: Session in 24 hours with ${session.studentName}`,
+          html: `
+            <h2>Session Reminder</h2>
+            <p>Hi ${tutor.fullName},</p>
+            <p>This is a reminder that you have an upcoming tutoring session:</p>
+            <ul>
+              <li><strong>Student:</strong> ${session.studentName} (${session.studentEmail})</li>
+              <li><strong>Subject:</strong> ${session.subject || 'Not specified'}</li>
+              <li><strong>Date & Time:</strong> ${sessionDate}</li>
+              <li><strong>Duration:</strong> ${session.hours} hour(s)</li>
+            </ul>
+            <p>Please prepare for the session and ensure you're ready on time.</p>
+            <hr>
+            <p style="color: #666; font-size: 12px;">Be Smart Online Tutorials</p>
+          `,
+        });
+        
+        // Mark reminder as sent
+        await storage.markReminderSent(session.id);
+        console.log(`[Reminder] Sent 24-hour reminder to tutor ${tutor.email} for session with ${session.studentName}`);
+      } catch (emailError) {
+        console.error(`[Reminder] Failed to send reminder to ${tutor.email}:`, emailError);
+      }
+    }
+  } catch (error) {
+    console.error('[Reminder] Error processing session reminders:', error);
+  }
+}, 30 * 60 * 1000); // Every 30 minutes
+
 // Middleware to check admin authorization
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
   const adminToken = req.headers['x-admin-token'] as string;
@@ -1712,6 +1771,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get upcoming sessions for tutor (for in-app notifications)
+  app.get("/api/tutor/upcoming-sessions", async (req, res) => {
+    try {
+      const tutorToken = req.headers['x-tutor-token'] as string;
+      if (!tutorToken || !tutorSessions.has(tutorToken)) {
+        return res.status(401).json({
+          success: false,
+          message: "Authentication required",
+        });
+      }
+      
+      const tutorId = tutorSessions.get(tutorToken);
+      const sessions = await storage.getUpcomingSessionsForTutor(tutorId!);
+      
+      // Add time until session for each
+      const now = new Date();
+      const sessionsWithTimeInfo = sessions.map(session => {
+        const sessionStart = session.sessionStartTime ? new Date(session.sessionStartTime) : null;
+        const hoursUntil = sessionStart ? Math.round((sessionStart.getTime() - now.getTime()) / (1000 * 60 * 60)) : null;
+        
+        return {
+          id: session.id,
+          studentName: session.studentName,
+          studentEmail: session.studentEmail,
+          subject: session.subject,
+          hours: session.hours,
+          sessionStartTime: session.sessionStartTime,
+          sessionEndTime: session.sessionEndTime,
+          meetingLink: session.meetingLink,
+          hoursUntil,
+          isWithin24Hours: hoursUntil !== null && hoursUntil <= 24 && hoursUntil > 0,
+        };
+      });
+      
+      res.json({
+        success: true,
+        sessions: sessionsWithTimeInfo,
+      });
+    } catch (error) {
+      console.error("Error fetching tutor upcoming sessions:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
+  // Get available (non-booked) slots for a specific tutor (public endpoint)
+  app.get("/api/availability/public/:tutorId", async (req, res) => {
+    try {
+      const { tutorId } = req.params;
+      const availabilities = await storage.getAvailabilitiesByTutor(tutorId);
+      
+      // Get today's date in SA timezone
+      const today = new Date();
+      const todayStr = today.toLocaleDateString('en-CA', { timeZone: 'Africa/Johannesburg' });
+      
+      // Filter to only show non-booked, future slots
+      const publicSlots = availabilities.filter(slot => {
+        // Exclude booked slots
+        if (slot.isBooked) return false;
+        // Exclude past dates
+        if (slot.date && slot.date < todayStr) return false;
+        return true;
+      }).map(slot => ({
+        id: slot.id,
+        date: slot.date,
+        day: slot.day,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        notes: slot.notes,
+      }));
+      
+      res.json(publicSlots);
+    } catch (error) {
+      console.error("Error fetching public availability:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  });
+
   // Get booking details by student email (for viewing active bookings)
   app.get("/api/bookings/student/:email", async (req, res) => {
     try {
@@ -2104,8 +2246,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // For host role (1), validate that the user is a tutor
       if (role === 1) {
-        const tutors = await storage.getAllTutors();
-        const isTutor = tutors.some(t => 
+        const tutors = await storage.getAllTutorProfiles();
+        const isTutor = tutors.some((t: { fullName: string; email?: string | null }) => 
           t.fullName.toLowerCase() === userName.toLowerCase() ||
           t.email?.toLowerCase() === userName.toLowerCase()
         );
