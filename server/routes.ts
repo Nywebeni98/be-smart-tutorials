@@ -2325,7 +2325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // In-memory storage for WhatsApp user sessions
   const whatsappSessions: Map<string, { lastMessage: string; timestamp: Date }> = new Map();
   
-  const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || '906447162558266';
+  const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
   const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || 'besmarttutor_webhook_verify';
   
