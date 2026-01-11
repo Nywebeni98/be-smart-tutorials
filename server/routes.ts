@@ -2318,6 +2318,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================
+  // WHATSAPP CLOUD API WEBHOOK
+  // ============================================
+  
+  // In-memory storage for WhatsApp user sessions
+  const whatsappSessions: Map<string, { lastMessage: string; timestamp: Date }> = new Map();
+  
+  const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || '906447162558266';
+  const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
+  const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || 'besmarttutor_webhook_verify';
+  
+  // Helper function to send WhatsApp message
+  async function sendWhatsAppMessage(to: string, message: string) {
+    if (!WHATSAPP_ACCESS_TOKEN) {
+      console.log('[WhatsApp] Access token not configured, skipping message send');
+      return null;
+    }
+    
+    try {
+      const response = await fetch(
+        `https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            to: to,
+            type: 'text',
+            text: { body: message },
+          }),
+        }
+      );
+      
+      const data = await response.json();
+      console.log('[WhatsApp] Message sent:', data);
+      return data;
+    } catch (error) {
+      console.error('[WhatsApp] Error sending message:', error);
+      return null;
+    }
+  }
+  
+  // WhatsApp Webhook Verification (GET)
+  app.get('/api/whatsapp/webhook', (req, res) => {
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+    
+    console.log('[WhatsApp Webhook] Verification request:', { mode, token });
+    
+    if (mode === 'subscribe' && token === WHATSAPP_VERIFY_TOKEN) {
+      console.log('[WhatsApp Webhook] Verification successful');
+      res.status(200).send(challenge);
+    } else {
+      console.log('[WhatsApp Webhook] Verification failed');
+      res.sendStatus(403);
+    }
+  });
+  
+  // WhatsApp Webhook Messages (POST)
+  app.post('/api/whatsapp/webhook', async (req, res) => {
+    const body = req.body;
+    
+    console.log('[WhatsApp Webhook] Received:', JSON.stringify(body, null, 2));
+    
+    // Always return 200 quickly to acknowledge receipt
+    res.sendStatus(200);
+    
+    // Check if this is a WhatsApp webhook event
+    if (body.object !== 'whatsapp_business_account') {
+      return;
+    }
+    
+    // Process messages
+    for (const entry of body.entry || []) {
+      for (const change of entry.changes || []) {
+        if (change.field !== 'messages') continue;
+        
+        const value = change.value;
+        if (!value.messages) continue;
+        
+        for (const message of value.messages) {
+          const from = message.from;
+          const messageType = message.type;
+          const messageBody = message.text?.body?.trim() || '';
+          
+          console.log(`[WhatsApp] Message from ${from}: ${messageBody} (type: ${messageType})`);
+          
+          // Store user session
+          whatsappSessions.set(from, {
+            lastMessage: messageBody,
+            timestamp: new Date(),
+          });
+          
+          // Handle message based on content
+          let replyMessage = '';
+          
+          if (messageBody === '1') {
+            // Payment option
+            replyMessage = `Please use the payment link below:\nhttps://pay.yoco.com/smart-tutor1\n\nTo proceed, send your proof of payment to:\nonlinepresenceimpact@gmail.com`;
+          } else if (messageBody === '2') {
+            // Book a tutor option
+            replyMessage = `To view available tutors and book a session, please visit:\nhttps://smarttutorclone.com/`;
+          } else if (messageBody === '3') {
+            // Ask a question option
+            replyMessage = `Please type your question below.\nOne of our agents will contact you shortly.`;
+          } else {
+            // Default welcome message for any other message
+            replyMessage = `Welcome to Online Be Smart Tutoring 👋\nWe are available and looking to book a tutor.\n\nPlease choose an option:\n1️⃣ Make a payment\n2️⃣ Book a tutor\n3️⃣ Ask a question`;
+          }
+          
+          // Send reply
+          await sendWhatsAppMessage(from, replyMessage);
+        }
+      }
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Setup WebSocket server for real-time chat

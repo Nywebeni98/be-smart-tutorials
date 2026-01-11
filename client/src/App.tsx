@@ -13,6 +13,7 @@ import PaymentFailure from "@/pages/payment-failure";
 import PaymentCancel from "@/pages/payment-cancel";
 import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
+import { SiWhatsapp } from "react-icons/si";
 
 function Router() {
   return (
@@ -43,6 +44,25 @@ function Router() {
   );
 }
 
+function WhatsAppButton() {
+  const whatsappNumber = "27123456789";
+  const message = encodeURIComponent("Hello! I'm interested in Be Smart Online Tutoring.");
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
+  
+  return (
+    <a
+      href={whatsappUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-white shadow-lg transition-transform hover:scale-110 hover:bg-green-600"
+      aria-label="Chat on WhatsApp"
+      data-testid="button-whatsapp"
+    >
+      <SiWhatsapp className="h-7 w-7" />
+    </a>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -50,6 +70,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <WhatsAppButton />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
