@@ -1,0 +1,133 @@
+ubscribe to webhooks
+To get alerted when you receive a message or when a message's status has changed, you need to set up a Webhooks endpoint for your app. Learn how to configure Webhooks.
+The callback URL or verify token couldn't be validated. Please verify the provided information or try again later.
+Callback URL
+https://smarttutorclone.com/api/whatsapp/webhook
+Verify token
+
+Perfect — this error is very common and fixable.
+You are in the right place, the problem is technical, not you 👍
+
+Error message:
+
+“The callback URL or verify token couldn't be validated”
+
+This means Meta could not reach your server OR your server did not respond correctly.
+
+Let’s fix it step by step.
+
+✅ WHAT META EXPECTS DURING VERIFICATION
+
+When Meta tries to verify your webhook, it sends a GET request like this:
+
+GET /api/whatsapp/webhook?
+hub.mode=subscribe
+hub.verify_token=besmarttutor_webhook_verify
+hub.challenge=123456
+
+
+Your server MUST reply with ONLY:
+
+123456
+
+
+If it does not, verification fails.
+
+🔴 MOST COMMON REASONS THIS FAILS (90% of cases)
+❌ 1. Website is NOT published / deployed
+
+Meta cannot access local or unpublished servers.
+
+👉 On Replit:
+
+Click Publish / Deploy
+
+Make sure smarttutorclone.com is LIVE
+
+Then test manually:
+👉 Open this in your browser:
+
+https://smarttutorclone.com/api/whatsapp/webhook
+
+
+If you see 404 / Cannot GET / Error → ❌ webhook is NOT reachable
+
+❌ 2. Webhook route exists but does NOT return hub.challenge
+
+Your backend code must include verification logic.
+
+If you are using Node.js + Express, you MUST have this:
+
+app.get("/api/whatsapp/webhook", (req, res) => {
+  const VERIFY_TOKEN = "besmarttutor_webhook_verify";
+
+  const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
+  const challenge = req.query["hub.challenge"];
+
+  if (mode === "subscribe" && token === VERIFY_TOKEN) {
+    console.log("Webhook verified");
+    res.status(200).send(challenge);
+  } else {
+    res.sendStatus(403);
+  }
+});
+
+
+⚠️ If this code is missing or wrong → verification FAILS
+
+❌ 3. Token mismatch (even 1 character)
+
+Meta token must EXACTLY MATCH:
+
+besmarttutor_webhook_verify
+
+
+✔ No spaces
+✔ Same lowercase
+✔ Same underscores
+
+❌ 4. HTTPS issue (SSL not active)
+
+Meta REQUIRES HTTPS.
+
+Your URL:
+
+https://smarttutorclone.com
+
+
+Must:
+
+Open in browser
+
+Show 🔒 lock icon
+
+Not redirect endlessly
+
+✅ QUICK TEST (VERY IMPORTANT)
+
+Open this URL in your browser RIGHT NOW:
+
+https://smarttutorclone.com/api/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=besmarttutor_webhook_verify&hub.challenge=TEST123
+
+Tell me:
+
+Do you see TEST123 on the page? → ✅ GOOD
+
+Or error / blank / JSON / 404? → ❌ problem found
+
+🛠️ IF YOU WANT, I CAN FIX THIS FOR YOU
+
+If you want zero stress, paste here:
+
+Your backend file (index.js, server.js, etc.)
+
+Or tell me: Replit + Node.js?
+
+I will:
+
+Correct the webhook code
+
+Give you exact code to paste
+
+Tell you exactly where
