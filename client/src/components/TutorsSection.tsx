@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { BookingModal } from '@/components/BookingModal';
-import { GraduationCap, Award, Building2, Heart, Users, Target, Star, BookOpen, Lightbulb, Calendar, DollarSign, Video, MessageCircle } from 'lucide-react';
+import { GraduationCap, Award, Building2, Heart, Users, Target, Star, BookOpen, Lightbulb, Calendar, DollarSign, Video } from 'lucide-react';
 import type { TutorProfile } from '@shared/schema';
 import siyandaImage from '@assets/WhatsApp_Image_2025-12-01_at_22.46.26_1114b9ca_1764881684167.jpg';
 import sibonisoImage from '@assets/WhatsApp_Image_2025-11-23_at_10.05.37_30c8290f_1764882512867.jpg';
@@ -609,37 +609,6 @@ export function TutorsSection() {
               </div>
             </Card>
           ))}
-
-          {/* WhatsApp Group Link Banner */}
-          <Card 
-            className="p-6 text-center"
-            style={{ 
-              background: 'linear-gradient(135deg, hsl(142 70% 45%) 0%, hsl(142 70% 35%) 100%)',
-            }}
-            data-testid="card-whatsapp-banner"
-          >
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <MessageCircle className="w-8 h-8 text-white" />
-              <div className="text-white">
-                <p className="font-semibold text-lg mb-1">
-                  Want to check tutor availability?
-                </p>
-                <p className="text-white/90 text-sm">
-                  Join our WhatsApp group to see when tutors are available and ask questions directly!
-                </p>
-              </div>
-              <a
-                href="https://chat.whatsapp.com/EX3ukhiGNXh9uyuKSWcTv2"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-green-600 font-semibold rounded-lg hover:bg-white/90 transition-colors"
-                data-testid="link-whatsapp-group"
-              >
-                <MessageCircle className="w-5 h-5" />
-                Join WhatsApp Group
-              </a>
-            </div>
-          </Card>
 
         </div>
       </div>
