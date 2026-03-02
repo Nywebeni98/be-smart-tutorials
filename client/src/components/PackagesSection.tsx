@@ -18,7 +18,7 @@ import {
   Users,
   Percent
 } from "lucide-react";
-import { SiFacebook, SiInstagram, SiTiktok, SiYoutube } from "react-icons/si";
+import { SiFacebook, SiTiktok } from "react-icons/si";
 
 const SALE_END_DATE = new Date('2026-03-16T23:59:59');
 
@@ -69,10 +69,8 @@ const PACKAGES = [
 ];
 
 const SOCIAL_LINKS = [
-  { name: 'Facebook', icon: SiFacebook, url: 'https://www.facebook.com/profile.php?id=61576aborana', color: 'text-blue-600 dark:text-blue-400' },
-  { name: 'Instagram', icon: SiInstagram, url: 'https://www.instagram.com/besmartonlinetutorials', color: 'text-pink-600 dark:text-pink-400' },
-  { name: 'TikTok', icon: SiTiktok, url: 'https://www.tiktok.com/@besmartonlinetutorials', color: 'text-foreground' },
-  { name: 'YouTube', icon: SiYoutube, url: 'https://www.youtube.com/@besmartonlinetutorials', color: 'text-red-600 dark:text-red-400' },
+  { name: 'Facebook', icon: SiFacebook, url: 'https://www.facebook.com/besmartonline', color: 'text-blue-600 dark:text-blue-400' },
+  { name: 'TikTok', icon: SiTiktok, url: 'https://www.tiktok.com/@besmartonline5?is_from_webapp=1&sender_device=pc', color: 'text-foreground' },
 ];
 
 function useCountdown(targetDate: Date) {
