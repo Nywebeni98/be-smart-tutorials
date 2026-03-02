@@ -12,12 +12,17 @@ import {
   Clock,
   BookOpen,
   Calendar,
-  X
+  X,
+  Flame,
+  Share2,
+  MessageCircle,
+  Users,
+  Percent
 } from "lucide-react";
+import { SiFacebook, SiInstagram, SiTiktok, SiYoutube } from "react-icons/si";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
-// Available subjects from the existing code
 const AVAILABLE_SUBJECTS = [
   'Mathematics',
   'Physical Sciences',
@@ -33,17 +38,16 @@ const AVAILABLE_SUBJECTS = [
   'Backend Development',
 ];
 
-// Package definitions
 const PACKAGES = [
   {
     id: 'basic',
     name: 'Basic Package',
-    price: 750,
+    price: 350,
+    period: 'week',
     subjectsAllowed: 1,
-    sessionsPerWeek: 1,
+    sessionsPerWeek: 3,
     sessionLength: '1 hour',
-    totalHours: 4,
-    savings: 50,
+    totalHours: '3 hours/week',
     color: 'bg-green-500',
     borderColor: 'border-green-500',
     popular: false,
@@ -53,60 +57,92 @@ const PACKAGES = [
   {
     id: 'standard',
     name: 'Standard Package',
-    price: 1500,
+    price: 1200,
+    period: 'month',
     subjectsAllowed: 2,
     sessionsPerWeek: 2,
-    sessionLength: '1 hour',
-    totalHours: 8,
-    savings: 100,
+    sessionLength: '2 hours',
+    totalHours: '16 hours/month',
     color: 'bg-blue-500',
     borderColor: 'border-blue-500',
     popular: true,
-    description: 'Balanced academic support across multiple subjects',
-    ideal: 'Balanced academic support across multiple subjects',
+    description: 'Perfect for deeper understanding and consistent progress',
+    ideal: 'Deeper understanding and consistent progress across subjects',
   },
   {
     id: 'premium',
     name: 'Premium Package',
-    price: 3200,
+    originalPrice: 3200,
+    price: 1500,
+    period: 'month',
     subjectsAllowed: 3,
     sessionsPerWeek: 3,
-    sessionLength: '1.5 hours',
-    totalHours: 18,
-    savings: 400,
+    sessionLength: '2 hours',
+    totalHours: '24 hours/month',
     color: 'bg-purple-500',
     borderColor: 'border-purple-500',
     popular: false,
-    description: 'Best for exam preparation and intensive support',
-    ideal: 'Exam preparation, deep understanding, and fast progress',
+    description: 'Intensive exam preparation and major improvements',
+    ideal: 'Students preparing for finals or catching up quickly',
   },
 ];
 
-// Reusable Yoco payment link
 const YOCO_PAYMENT_LINK = 'https://pay.yoco.com/smart-tutor1';
+
+const SALE_END_DATE = new Date('2026-03-16T23:59:59');
+
+const SOCIAL_LINKS = [
+  { name: 'Facebook', icon: SiFacebook, url: 'https://www.facebook.com/profile.php?id=61576aborana', color: 'text-blue-600 dark:text-blue-400' },
+  { name: 'Instagram', icon: SiInstagram, url: 'https://www.instagram.com/besmartonlinetutorials', color: 'text-pink-600 dark:text-pink-400' },
+  { name: 'TikTok', icon: SiTiktok, url: 'https://www.tiktok.com/@besmartonlinetutorials', color: 'text-foreground' },
+  { name: 'YouTube', icon: SiYoutube, url: 'https://www.youtube.com/@besmartonlinetutorials', color: 'text-red-600 dark:text-red-400' },
+];
+
+function useCountdown(targetDate: Date) {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: false });
+
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date().getTime();
+      const diff = targetDate.getTime() - now;
+      if (diff <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: true });
+        return;
+      }
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((diff % (1000 * 60)) / 1000),
+        expired: false,
+      });
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [targetDate]);
+
+  return timeLeft;
+}
 
 export default function MonthlyPackages() {
   const { user, signInWithGoogle } = useAuth();
   const { toast } = useToast();
   const [selectedPackage, setSelectedPackage] = useState<string | null>('standard');
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
-  const [studentName, setStudentName] = useState('');
-  const [studentEmail, setStudentEmail] = useState('');
+  const countdown = useCountdown(SALE_END_DATE);
 
   useEffect(() => {
-    document.title = "Monthly Packages - Be Smart Online Tutorials";
+    document.title = "Tutoring Packages - Be Smart Online Tutorials";
   }, []);
 
-  // Get current package details
   const currentPackage = PACKAGES.find(p => p.id === selectedPackage);
 
-  // Handle package selection
   const handlePackageSelect = (packageId: string) => {
     setSelectedPackage(packageId);
-    setSelectedSubjects([]); // Reset subjects when package changes
+    setSelectedSubjects([]);
   };
 
-  // Handle subject toggle
   const handleSubjectToggle = (subject: string) => {
     if (!currentPackage) return;
 
@@ -125,7 +161,6 @@ export default function MonthlyPackages() {
     }
   };
 
-  // Handle proceed to payment
   const handleProceedToPayment = () => {
     if (!user) {
       toast({
@@ -145,21 +180,18 @@ export default function MonthlyPackages() {
       return;
     }
 
-    // Store package info for reference
     sessionStorage.clear();
     sessionStorage.setItem('packageName', currentPackage?.name || '');
     sessionStorage.setItem('packagePrice', String(currentPackage?.price || 0));
     sessionStorage.setItem('packageSubjects', selectedSubjects.join(', '));
 
-    // Redirect to Yoco payment link
     window.location.href = YOCO_PAYMENT_LINK;
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      {/* Header */}
       <header className="bg-background border-b sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-2 flex-wrap">
           <Link href="/">
             <Button variant="ghost" className="gap-2" data-testid="button-back-home">
               <ArrowLeft className="h-4 w-4" />
@@ -167,7 +199,7 @@ export default function MonthlyPackages() {
             </Button>
           </Link>
           <h1 className="text-xl font-bold" style={{ color: 'hsl(var(--brand-blue))' }}>
-            Monthly Packages
+            Tutoring Packages
           </h1>
           {user ? (
             <span className="text-sm text-muted-foreground">
@@ -182,21 +214,99 @@ export default function MonthlyPackages() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Intro Section */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Monthly Online Tutoring Packages</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Our monthly tutoring packages are designed to give learners consistent support, 
-            clear structure, and better results. All packages are based on our standard rate 
-            of R200 per hour, with discounted pricing for monthly commitment.
-          </p>
-          <div className="mt-4 inline-flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-4 py-2 rounded-full text-sm font-medium">
-            <Star className="h-4 w-4" />
-            Save more with monthly packages compared to pay-as-you-go lessons
+        {!countdown.expired && (
+          <div 
+            className="mb-10 p-6 rounded-md border-2 text-center"
+            style={{ 
+              borderColor: 'hsl(var(--brand-orange))',
+              background: 'linear-gradient(135deg, hsl(var(--brand-orange) / 0.15) 0%, hsl(var(--brand-yellow) / 0.15) 100%)'
+            }}
+            data-testid="banner-sale-packages"
+          >
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Flame className="w-6 h-6 text-red-500" />
+              <h3 className="font-heading font-bold text-2xl sm:text-3xl text-red-600 dark:text-red-400">
+                LIMITED TIME SALE
+              </h3>
+              <Flame className="w-6 h-6 text-red-500" />
+            </div>
+            <p className="text-lg font-semibold mb-4" style={{ color: 'hsl(var(--brand-blue))' }}>
+              Get 30% OFF your monthly charges!
+            </p>
+
+            <div className="flex justify-center gap-3 mb-5 flex-wrap">
+              {[
+                { label: 'Days', value: countdown.days },
+                { label: 'Hours', value: countdown.hours },
+                { label: 'Minutes', value: countdown.minutes },
+                { label: 'Seconds', value: countdown.seconds },
+              ].map((item) => (
+                <div key={item.label} className="bg-background rounded-md p-3 min-w-[70px] border" data-testid={`countdown-pkg-${item.label.toLowerCase()}`}>
+                  <div className="text-2xl font-bold" style={{ color: 'hsl(var(--brand-blue))' }}>
+                    {String(item.value).padStart(2, '0')}
+                  </div>
+                  <div className="text-xs text-muted-foreground uppercase">{item.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="max-w-xl mx-auto text-left space-y-2 mb-5">
+              <p className="font-semibold text-base" style={{ color: 'hsl(var(--brand-blue))' }}>
+                How to qualify for 30% OFF:
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <Share2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
+                  <span>Follow us on ALL our social media pages (links below)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <MessageCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
+                  <span>Comment on our pages and repost our videos</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
+                  <span>Send screenshots as proof to <strong>+27 79 512 3150</strong> on WhatsApp</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Users className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
+                  <span>Bring 2 students who sign up and pay for the <strong>monthly package</strong></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Percent className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
+                  <span>Once confirmed, you get <strong>30% OFF</strong> your monthly charges!</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-3">
+              {SOCIAL_LINKS.map((social) => {
+                const Icon = social.icon;
+                return (
+                  <a
+                    key={social.name}
+                    href={social.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-testid={`link-social-pkg-${social.name.toLowerCase()}`}
+                  >
+                    <Button variant="outline" className="gap-2">
+                      <Icon className={`w-4 h-4 ${social.color}`} />
+                      {social.name}
+                    </Button>
+                  </a>
+                );
+              })}
+            </div>
           </div>
+        )}
+
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-4">Our Tutoring Packages</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Choose the package that best fits your learning needs. From weekly support to intensive monthly preparation.
+          </p>
         </div>
 
-        {/* Package Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {PACKAGES.map((pkg) => (
             <Card 
@@ -217,6 +327,13 @@ export default function MonthlyPackages() {
                   </Badge>
                 </div>
               )}
+              {'originalPrice' in pkg && pkg.originalPrice && (
+                <div className="absolute -top-3 right-4">
+                  <Badge className="bg-red-500 hover:bg-red-500 text-white">
+                    SALE
+                  </Badge>
+                </div>
+              )}
               <CardHeader className={`${pkg.popular ? 'pt-6' : ''}`}>
                 <div className={`w-12 h-12 rounded-lg ${pkg.color} flex items-center justify-center mb-3`}>
                   <Package className="h-6 w-6 text-white" />
@@ -231,8 +348,13 @@ export default function MonthlyPackages() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center">
+                  {'originalPrice' in pkg && pkg.originalPrice && (
+                    <div className="text-lg text-muted-foreground line-through mb-1">
+                      R{pkg.originalPrice.toLocaleString()}/{pkg.period}
+                    </div>
+                  )}
                   <span className="text-4xl font-bold">R{pkg.price.toLocaleString()}</span>
-                  <span className="text-muted-foreground">/month</span>
+                  <span className="text-muted-foreground">/{pkg.period}</span>
                 </div>
                 
                 <ul className="space-y-2 text-sm">
@@ -250,13 +372,9 @@ export default function MonthlyPackages() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500" />
-                    <span className="font-medium">{pkg.totalHours} hours per month</span>
+                    <span className="font-medium">{pkg.totalHours}</span>
                   </li>
                 </ul>
-
-                <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-center py-2 px-3 rounded-md text-sm font-medium">
-                  Save R{pkg.savings} compared to hourly rate
-                </div>
               </CardContent>
               <CardFooter>
                 <p className="text-xs text-muted-foreground text-center w-full">
@@ -267,7 +385,6 @@ export default function MonthlyPackages() {
           ))}
         </div>
 
-        {/* Subject Selection */}
         {selectedPackage && currentPackage && (
           <Card className="mb-8">
             <CardHeader>
@@ -326,7 +443,6 @@ export default function MonthlyPackages() {
           </Card>
         )}
 
-        {/* Summary and Payment */}
         {selectedPackage && currentPackage && selectedSubjects.length > 0 && (
           <Card className="mb-8">
             <CardHeader>
@@ -347,13 +463,13 @@ export default function MonthlyPackages() {
               </div>
               <div className="flex justify-between items-center">
                 <span>Total Hours:</span>
-                <span className="font-medium">{currentPackage.totalHours} hours/month</span>
+                <span className="font-medium">{currentPackage.totalHours}</span>
               </div>
               <div className="border-t pt-4">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-medium">Amount to Pay:</span>
                   <span className="text-2xl font-bold" style={{ color: 'hsl(var(--brand-blue))' }}>
-                    R{currentPackage.price.toLocaleString()}
+                    R{currentPackage.price.toLocaleString()}/{currentPackage.period}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">

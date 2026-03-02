@@ -9,9 +9,7 @@ import { BookingModal } from '@/components/BookingModal';
 import { GraduationCap, Award, Building2, Heart, Users, Target, Star, BookOpen, Lightbulb, Calendar, DollarSign, Video } from 'lucide-react';
 import type { TutorProfile } from '@shared/schema';
 import siyandaImage from '@assets/WhatsApp_Image_2025-12-01_at_22.46.26_1114b9ca_1764881684167.jpg';
-import sibonisoImage from '@assets/WhatsApp_Image_2025-11-23_at_10.05.37_30c8290f_1764882512867.jpg';
 import thamsanqaImage from '@assets/WhatsApp_Image_2025-12-05_at_11.28.31_2db17684_1764958250135.jpg';
-import luthoImage from '@assets/WhatsApp_Image_2025-12-19_at_21.46.00_22d812e3_1766264032532.jpg';
 import luthandoImage from '@assets/WhatsApp_Image_2025-12-22_at_15.52.01_0c22999e_1766433068327.jpg';
 import asemahleImage from '@assets/WhatsApp_Image_2026-01-04_at_11.09.55_1767625249410.jpeg';
 import milisaImage from '@assets/WhatsApp_Image_2026-01-01_at_19.45.33_bdba9873_1767653194048.jpg';
@@ -51,8 +49,8 @@ const tutors: Tutor[] = [
     education: 'BSc Mathematics, Computer Science & Statistics - UCT',
     bio: 'My name is Siyanda Stekela, and I am a professional Mathematics tutor with over 9 years of tutoring experience, specialising in all school grades and university-level Mathematics. I offer expert tutoring for both the CAPS curriculum and the Cambridge curriculum, supporting learners in achieving academic confidence and excellence.',
     quote: 'I am passionate about empowering students with the mathematical skills and confidence they need to succeed in their academic journey and beyond.',
-    hourlyRate: 200,
-    appliedMathsRate: 220,
+    hourlyRate: 120,
+    appliedMathsRate: 150,
     zoomUrl: 'https://zoom.us/j/siyanda-stekela',
     highlights: [
       {
@@ -73,37 +71,6 @@ const tutors: Tutor[] = [
     ],
   },
   {
-    id: 'siboniso-shandu',
-    name: 'Siboniso Shandu',
-    title: 'Mathematics & Physical Sciences Tutor',
-    image: sibonisoImage,
-    subjects: ['Mathematics', 'Physical Sciences'],
-    experience: '8+ Years Experience',
-    education: 'BEd Student - UNISA',
-    bio: 'I am a BEd student at UNISA and a dedicated tutor in Mathematics and Physical Sciences, with over 8 years of tutoring experience. I am passionate about helping learners truly understand the subjects by breaking down difficult concepts into simple, clear explanations. My teaching style is learner-centred and highly interactive, allowing students to build strong foundational understanding before attempting questions.',
-    quote: 'My goal is not only to help learners pass, but to help them excel. I guide learners step-by-step to improve their confidence and develop effective exam-writing strategies.',
-    hourlyRate: 200,
-    physicsRate: 250,
-    zoomUrl: 'https://zoom.us/j/siboniso-shandu',
-    highlights: [
-      {
-        icon: Target,
-        title: 'Learner-Centred Approach',
-        description: 'Step-by-step guidance on how to approach different types of problems and develop effective study strategies.',
-      },
-      {
-        icon: Star,
-        title: 'Outstanding Results',
-        description: 'Proven track record of helping many learners improve their marks dramatically over the years.',
-      },
-      {
-        icon: Users,
-        title: 'Individual Focus',
-        description: 'Patient and committed to each learner\'s individual needs, helping them not just pass, but excel.',
-      },
-    ],
-  },
-  {
     id: 'thamsanqa-ngonyama',
     name: 'Thamsanqa Charles Ngonyama',
     title: 'English, History & CAT Tutor',
@@ -113,7 +80,7 @@ const tutors: Tutor[] = [
     education: 'BEd Senior & FET Phase (English & History) - UJ',
     bio: 'I am Thamsanqa Charles Ngonyama. I hold a Bachelor of Education in Senior and FET Phase (English and History) from the University of Johannesburg. I have tutored learners for a couple of years in English, History and CAT. I have always been passionate about teaching which is why I chose it as a career. My degree has equipped me with the necessary skills to create intervention plans for learners that have a hard time grasping content, which makes me the ideal tutor.',
     quote: 'Teaching is not just a career for me, it is my passion. I believe every learner can succeed with the right support and guidance.',
-    hourlyRate: 200,
+    hourlyRate: 120,
     zoomUrl: 'https://zoom.us/j/thamsanqa-ngonyama',
     highlights: [
       {
@@ -134,37 +101,6 @@ const tutors: Tutor[] = [
     ],
   },
   {
-    id: 'lutho-hanjana',
-    name: 'Lutho Hanjana',
-    title: 'Multi-Subject Tutor',
-    image: luthoImage,
-    subjects: ['Life Sciences', 'English', 'Maths', 'Physics'],
-    experience: 'Qualified Health Professional',
-    education: 'Qualification in Opticianry - Cape Peninsula University of Technology',
-    bio: 'I have a qualification in Opticianry that I obtained at the Cape Peninsula University of Capetown in the Faculty of Health Science. My aim is to empower the youth with knowledge that will shape their future.',
-    quote: 'Education is the key to unlocking potential. I am committed to helping every student achieve their academic goals.',
-    hourlyRate: 200,
-    physicsRate: 250,
-    zoomUrl: 'https://zoom.us/j/lutho-hanjana',
-    highlights: [
-      {
-        icon: GraduationCap,
-        title: 'Health Science Background',
-        description: 'Qualified in Opticianry from Cape Peninsula University of Technology, bringing unique scientific perspective to tutoring.',
-      },
-      {
-        icon: Users,
-        title: 'Youth Empowerment Focus',
-        description: 'Passionate about empowering young students with knowledge and skills to shape their future success.',
-      },
-      {
-        icon: Star,
-        title: 'Multi-Subject Expert',
-        description: 'Teaches Life Sciences, English, Mathematics, and Physics across multiple grade levels with dedication and care.',
-      },
-    ],
-  },
-  {
     id: 'luthando-manisi',
     name: 'Luthando Manisi',
     title: 'Afrikaans Tutor',
@@ -174,7 +110,7 @@ const tutors: Tutor[] = [
     education: 'Afrikaans Language Specialist',
     bio: 'Ek is passievol oor Afrikaans en dit is my doel om hierdie pragtige taal met die jeug te deel! I am deeply passionate about teaching Afrikaans and helping students discover the beauty of this South African language. My unique teaching approach combines conversational practice with grammar fundamentals, making learning enjoyable and effective. "Afrikaans is nie net \'n taal nie, dit is \'n kultuur en \'n manier van lewe." Whether you\'re a beginner or looking to improve your fluency, I\'m here to guide you on your Afrikaans journey. Kom ons leer saam!',
     quote: 'Afrikaans is nie net \'n taal nie, dit is \'n kultuur en \'n manier van lewe.',
-    hourlyRate: 250,
+    hourlyRate: 150,
     zoomUrl: 'https://zoom.us/j/luthando-manisi',
     highlights: [
       {
@@ -204,8 +140,8 @@ const tutors: Tutor[] = [
     education: 'BSc Biotechnology Student - UWC',
     bio: 'Hi, I\'m Asemahle, an undergraduate Biotechnology student at the University of the Western Cape (UWC). I have 6 years of tutoring experience, working both independently and with established tutoring companies such as Preeva. My passion for education drives me to help students grasp concepts and achieve their best. I specialise in Maths and Science, using clear explanations and learner-focused methods to build confidence and improve results.',
     quote: 'Let me help upgrade your Maths and Science performance.',
-    hourlyRate: 200,
-    physicsRate: 250,
+    hourlyRate: 120,
+    physicsRate: 150,
     zoomUrl: 'https://zoom.us/j/asemahle-dyalvan',
     highlights: [
       {
@@ -235,7 +171,7 @@ const tutors: Tutor[] = [
     education: 'Geography Specialist',
     bio: 'I am passionate about Geography and helping students explore and understand the world around them. From physical landscapes to human environments, I make Geography come alive through engaging lessons and real-world examples. My goal is to help learners develop a deeper appreciation for our planet while achieving academic success.',
     quote: 'Geography helps us understand our world and our place in it.',
-    hourlyRate: 200,
+    hourlyRate: 120,
     zoomUrl: 'https://zoom.us/j/milisa-matshintsana',
     highlights: [
       {
@@ -265,8 +201,8 @@ const tutors: Tutor[] = [
     education: 'Full-Stack Developer',
     bio: 'My name is Mhlangovuyo Balfour, and I am a Full-Stack Developer with 3 years of hands-on experience building robust and scalable applications. I specialise in backend development (C#, SQL, MongoDB) and frontend development using React, JavaScript, HTML, and CSS. I am passionate about technology and also enjoy mentoring others to understand and apply development concepts effectively.',
     quote: 'Technology empowers us to build the future, one line of code at a time.',
-    hourlyRate: 220,
-    backendRate: 285,
+    hourlyRate: 150,
+    backendRate: 200,
     zoomUrl: 'https://zoom.us/j/mhlangovuyo-balfour',
     highlights: [
       {
@@ -296,8 +232,8 @@ const tutors: Tutor[] = [
     education: 'Professional Tutor',
     bio: 'I am Simamkele Mabaso, a professional tutor of Mathematics, Physical Science, Geography and Life Sciences with 2 years of experience and engaging with Students, bringing the best out of them and making sure I leave no stone unturned when delivering lessons to all learners. I\'m passionate about Tutoring, I have enthusiasm and more patience with learners to make sure they grasp every concept in my lessons.',
     quote: 'Bringing out the best in every student, one lesson at a time.',
-    hourlyRate: 200,
-    physicsRate: 250,
+    hourlyRate: 120,
+    physicsRate: 150,
     zoomUrl: 'https://zoom.us/j/simamkele-mabaso',
     highlights: [
       {
@@ -359,7 +295,7 @@ export function TutorsSection() {
       id: matchingRegisteredTutor?.id || featuredTutor.id,
       supabaseUserId: matchingRegisteredTutor?.supabaseUserId || featuredTutor.id,
       fullName: matchingRegisteredTutor?.fullName || featuredTutor.name,
-      email: matchingRegisteredTutor?.email || (featuredTutor.id === 'lutho-hanjana' ? 'Luthohanjana125@gmail.com' : `${featuredTutor.id}@besmartonline.co.za`),
+      email: matchingRegisteredTutor?.email || `${featuredTutor.id}@besmartonline.co.za`,
       passwordHash: matchingRegisteredTutor?.passwordHash || null,
       phone: matchingRegisteredTutor?.phone || null,
       bio: matchingRegisteredTutor?.bio || featuredTutor.bio,
